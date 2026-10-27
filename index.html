@@ -1028,30 +1028,39 @@ async function openProject(file){
 /* ====================== MCP Bridge Client ====================== */
 async function pollMcpBridge() {
   const mcpBadge = $('#mcpBadge');
+  const bridgeBase = 'http://127.0.0.1:17421';
+  let active = false;
+
   while (true) {
     try {
-      const res = await fetch('/bridge/poll', { cache: 'no-store' });
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      const data = await res.json();
-      if (mcpBadge) {
-        mcpBadge.textContent = '🟢 MCP Conectado';
-        mcpBadge.className = 'mcp-pill on';
-      }
-      if (data && data.id && data.command) {
-        const result = await handleBridgeCommand(data.command.action, data.command.params);
-        await fetch('/bridge/result', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: data.id, result })
-        });
+      const res = await fetch(bridgeBase + '/bridge/poll', { method: 'GET', mode: 'cors', cache: 'no-store' });
+      if (res.ok) {
+        active = true;
+        if (mcpBadge) {
+          mcpBadge.textContent = '🟢 MCP Conectado';
+          mcpBadge.className = 'mcp-pill on';
+        }
+        const data = await res.json();
+        if (data && data.id && data.command) {
+          const result = await handleBridgeCommand(data.command.action, data.command.params);
+          await fetch(bridgeBase + '/bridge/result', {
+            method: 'POST',
+            mode: 'cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: data.id, result })
+          });
+        }
+        await new Promise(r => setTimeout(r, 150));
+        continue;
       }
     } catch (err) {
+      active = false;
       if (mcpBadge) {
         mcpBadge.textContent = '⚪ MCP Offline';
         mcpBadge.className = 'mcp-pill off';
       }
-      await new Promise(r => setTimeout(r, 2500));
     }
+    await new Promise(r => setTimeout(r, active ? 400 : 4000));
   }
 }
 

@@ -73,19 +73,48 @@ h4{margin:0 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:.07em;c
 #toast{position:fixed;right:14px;bottom:14px;background:var(--p2);border:1px solid var(--ac);padding:8px 12px;border-radius:8px;opacity:0;transition:.2s;pointer-events:none;z-index:99}
 #toast.on{opacity:1}
 pre#selftest{display:none}
+
+.fb-bar{display:flex;flex-wrap:wrap;gap:5px;padding:6px 10px;background:var(--p2);border-bottom:1px solid var(--bd);align-items:center}
+.fb-btn{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:14px;font-weight:700;font-size:11px;cursor:pointer;border:1px solid var(--bd);background:var(--p3);color:var(--tx);transition:all .15s}
+.fb-btn:hover{transform:translateY(-1px);border-color:var(--ac)}
+.fb-btn.on{border-color:var(--ac);box-shadow:0 0 8px rgba(34,211,238,.35);background:rgba(34,211,238,.12);color:#fff}
+.fb-btn.perfect.on{border-color:#22d3ee;box-shadow:0 0 8px rgba(34,211,238,.5);color:#7dd3fc}
+.fb-btn.super.on{border-color:#10b981;box-shadow:0 0 8px rgba(16,185,129,.5);color:#6ee7b7}
+.fb-btn.good.on{border-color:#3b82f6;box-shadow:0 0 8px rgba(59,130,246,.5);color:#93c5fd}
+.fb-btn.ok.on{border-color:#f59e0b;box-shadow:0 0 8px rgba(245,158,11,.5);color:#fde68a}
+.fb-btn.bad.on{border-color:#ef4444;box-shadow:0 0 8px rgba(239,68,68,.5);color:#fca5a5}
+.fb-btn.gold.on{border-color:#fbbf24;box-shadow:0 0 8px rgba(251,191,36,.5);color:#fef08a}
+.fb-btn.goldmiss.on{border-color:#d97706;box-shadow:0 0 8px rgba(217,119,6,.5);color:#fed7aa}
+
+.pal-wrap{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0}
+.pal-chip{display:inline-flex;align-items:center;gap:4px;padding:3px 7px;border-radius:10px;font-size:10px;cursor:pointer;background:var(--p3);border:1px solid var(--bd);color:var(--tx);transition:.12s}
+.pal-chip:hover{border-color:var(--ac);transform:translateY(-1px)}
+.pal-dot{width:9px;height:9px;border-radius:50%;display:inline-block}
+
+.panel-box{background:var(--p2);border:1px solid var(--bd);border-radius:8px;padding:9px;margin-bottom:8px}
+.panel-box h5{margin:0 0 6px 0;font-size:11px;font-weight:700;color:var(--tx);display:flex;justify-content:space-between;align-items:center;text-transform:uppercase;letter-spacing:.04em}
+
+.mcp-pill{font-size:10px;padding:3px 8px;border-radius:12px;font-weight:600;display:inline-flex;align-items:center;gap:4px}
+.mcp-pill.on{background:rgba(16,185,129,.2);color:#6ee7b7;border:1px solid rgba(16,185,129,.4)}
+.mcp-pill.off{background:rgba(131,148,176,.15);color:#8394b0;border:1px solid rgba(131,148,176,.3)}
+
+.tab-pane{display:none}
+.tab-pane.on{display:block}
+
 </style>
 </head>
 <body>
 <header>
   <div class="logo">JD</div>
-  <div class="brand"><b>LiamToolScoringFX <span style="color:var(--ac)">V3</span></b><small>Plantillas reales de Spine · Unity</small></div>
-  <select id="tplSel" title="Plantilla original de Just Dance Next"><option value="">(cargando biblioteca…)</option></select>
-  <label class="btn">Abrir plantilla (.lfx.json + png)<input id="tplFile" type="file" multiple accept=".json,.png,.skel" hidden></label>
-  <input id="nameIn" type="text" value="ScoringFX_Custom" style="width:150px" title="Nombre del ScoringFX">
+  <div class="brand"><b>LiamToolScores2Unity <span style="color:var(--ac)">V3.5</span></b><small>Estudio de Scores · Unity & JD Next</small></div>
+  <select id="tplSel" title="Plantilla original de Just Dance Next" style="max-width:180px"><option value="">(cargando biblioteca…)</option></select>
+  <label class="btn sm">Abrir plantilla (.lfx/.png)<input id="tplFile" type="file" multiple accept=".json,.png,.skel" hidden></label>
+  <input id="nameIn" type="text" value="ScoringFX_Custom" style="width:140px" title="Nombre del ScoringFX">
+  <span id="mcpBadge" class="mcp-pill off" title="Estado de conexión con el Servidor MCP local">⚪ MCP Offline</span>
   <span style="flex:1"></span>
-  <label class="btn">Abrir proyecto<input id="projFile" type="file" accept=".json" hidden></label>
-  <button id="saveProj">Guardar proyecto</button>
-  <button id="expBtn" class="ok">Exportar…</button>
+  <label class="btn sm">Abrir proyecto<input id="projFile" type="file" accept=".json" hidden></label>
+  <button id="saveProj" class="sm">Guardar proyecto</button>
+  <button id="expBtn" class="ok" style="font-weight:700">📦 Exportar para Unity…</button>
 </header>
 <div id="main">
   <aside id="left">
@@ -100,6 +129,16 @@ pre#selftest{display:none}
       <div class="hint">Las capas extra se hornean a keyframes: funcionan en Unity (runtime LiamFX). No existen en el .skel original.</div></section>
   </aside>
   <div id="center">
+    <div class="fb-bar" id="quickFbBar">
+      <span style="font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--mut);margin-right:2px">Feedback:</span>
+      <button class="fb-btn perfect" data-a="Perfect">⭐ PERFECT</button>
+      <button class="fb-btn super" data-a="Super">💚 SUPER</button>
+      <button class="fb-btn good" data-a="Good">💙 GOOD</button>
+      <button class="fb-btn ok" data-a="Ok">💛 OK</button>
+      <button class="fb-btn bad" data-a="Bad">❌ MISS</button>
+      <button class="fb-btn gold" data-a="Gold">🏆 YEAH!</button>
+      <button class="fb-btn goldmiss" data-a="GoldMiss">⚠ GOLD MISS</button>
+    </div>
     <div id="bar">
       <span>Fondo</span><select id="bgSel"><option value="dark">Oscuro</option><option value="jd">JD arena</option><option value="check">Transparente</option><option value="black">Negro</option><option value="white">Blanco</option></select>
       <label><input type="checkbox" id="gChk" checked> Guías</label>
@@ -122,17 +161,69 @@ pre#selftest{display:none}
   <aside id="right"><section id="insp"></section></aside>
 </div>
 
-<div class="modal" id="expModal"><div class="card">
-  <div style="display:flex;justify-content:space-between"><h3>Exportar</h3><button class="sm" id="expClose">✕</button></div>
-  <div class="opt"><b>① Paquete Unity LiamFX (completo)</b>
-    <ul><li>Incluye TODO: texturas, texto, tinte, escala, velocidad, fondos y partículas extra</li><li><code>.lfx.json</code> + PNG(s) → <code>LiamFXPlayer</code> en Unity</li></ul>
-    <button class="ok" id="exUnity">Descargar ZIP Unity</button></div>
-  <div class="opt"><b>② Pack compatible con Spine / Just Dance Next</b>
-    <ul><li>Mismo <code>.skel</code> original + atlas PNG repintado (textura, texto, hue)</li><li>NO incluye: tinte/escala/velocidad/capas extra (el .skel binario no se puede reescribir aquí)</li><li><span id="skelState"></span></li></ul>
-    <button class="pri" id="exSpine">Descargar ZIP Spine</button></div>
-  <div class="opt"><b>③ Archivos sueltos</b><br><button id="exJson">.lfx.json</button> <button id="exPng">Atlas PNG</button> <button id="exThumb">Thumbnail 256</button></div>
-  <label class="hint">Fragmento para <code>scoring_fx_definitions.json</code> (el juego carga los oficiales desde bundles; para custom depende de tu loader):</label>
-  <textarea id="catOut" readonly rows="6" style="width:100%;background:var(--p2);color:var(--tx);border:1px solid var(--bd);border-radius:6px;font:10px Consolas,monospace"></textarea>
+<div class="modal" id="expModal"><div class="card" style="width:720px">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+    <h3 style="margin:0;display:flex;align-items:center;gap:8px">
+      <span style="color:var(--ac)">📦</span> Exportar ScoringFX
+    </h3>
+    <button class="sm" id="expClose">✕</button>
+  </div>
+  
+  <div class="tabs" style="margin-bottom:12px">
+    <button id="tabBtnUnity" class="on" style="font-weight:700">🎮 Paquete Unity (Recomendado)</button>
+    <button id="tabBtnSpine">🦴 Spine / JD Next (StreamingAssets)</button>
+    <button id="tabBtnLoose">📄 Archivos Sueltos</button>
+  </div>
+  
+  <!-- Panel Unity -->
+  <div id="paneUnity" class="opt tab-pane on" style="border-color:var(--ac);background:rgba(34,211,238,.04)">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <b style="font-size:13px;color:var(--ac)">🎮 Paquete Completo para Unity</b>
+      <span class="badge u">Plug & Play (C# + Shaders)</span>
+    </div>
+    <p style="color:var(--tx);font-size:11.5px;margin:6px 0">
+      Exporta la carpeta estructurada lista para colocar en la carpeta <code>Assets/</code> de tu proyecto Unity.
+      Incluye la animación a 60 FPS (<code>.lfx.json</code>), texturas atlas PNG, shaders transparentes/aditivos y componentes C# (<code>LiamFXPlayer</code> y <code>LiamFXCanvasGraphic</code>).
+    </p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0">
+      <button class="ok" id="exUnity" style="padding:7px 14px;font-size:12px;font-weight:700">📦 Descargar ZIP Unity</button>
+      <button class="pri" id="exUnityDirect" style="padding:7px 14px;font-size:12px;font-weight:700">📂 Guardar en Carpeta Assets de Unity…</button>
+      <button class="btn" id="copyCSharp" style="padding:7px 12px;font-size:12px">📋 Copiar Código C#</button>
+    </div>
+    <div class="hint" style="background:var(--p3);padding:10px;border-radius:6px;border:1px solid var(--bd);line-height:1.45">
+      <b>🚀 3 Pasos para usarlo en Unity:</b><br>
+      1. Extrae el ZIP dentro de la carpeta <code>Assets/</code> de tu proyecto Unity.<br>
+      2. Abre el menú <b>Window &gt; Liam &gt; Scoring FX Studio Review</b> para previsualizar los 6 feedbacks en tiempo real.<br>
+      3. Añade <code>LiamFXPlayer</code> (en 3D) o <code>LiamFXCanvasGraphic</code> (en UI Canvas) y llama a <code>player.Play(ScoringFeedbackType.Perfect);</code>.
+    </div>
+  </div>
+
+  <!-- Panel Spine -->
+  <div id="paneSpine" class="opt tab-pane">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <b style="font-size:13px;color:var(--warn)">🦴 Modding Spine / Just Dance Next</b>
+      <span class="badge s">StreamingAssets</span>
+    </div>
+    <p style="color:var(--tx);font-size:11.5px;margin:6px 0">
+      Genera el paquete con el archivo binario <code>.skel</code> original de Spine 4.0 y el atlas PNG repintado para inyección directa en el juego.
+    </p>
+    <div style="margin:8px 0"><span id="skelState"></span></div>
+    <button class="pri" id="exSpine" style="padding:6px 14px">Descargar ZIP Spine</button>
+    <div style="margin-top:10px">
+      <label class="hint">Fragmento para <code>scoring_fx_definitions.json</code>:</label>
+      <textarea id="catOut" readonly rows="5" style="width:100%;background:var(--p2);color:var(--tx);border:1px solid var(--bd);border-radius:6px;font:10px Consolas,monospace;margin-top:4px"></textarea>
+    </div>
+  </div>
+
+  <!-- Panel Sueltos -->
+  <div id="paneLoose" class="opt tab-pane">
+    <b>Archivos individuales listos para descarga</b>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin:10px 0">
+      <button id="exJson">.lfx.json</button>
+      <button id="exPng">Atlas PNG(s)</button>
+      <button id="exThumb">Thumbnail 256×256</button>
+    </div>
+  </div>
 </div></div>
 <div id="toast"></div>
 <pre id="selftest"></pre>
@@ -445,11 +536,12 @@ function loop(ts){
     if(App.stream){App.streamT+=dt;if(App.streamT>=.55){App.streamT=0;const ks=['Perfect','Perfect','Super','Good','Perfect','Gold','Ok','Bad'].filter(k=>App.lfx.animations[k]);setAnim(ks[Math.floor(Math.random()*ks.length)],true)}}
     else if(App.t>B.duration+.35){if(App.loop)App.t=0;else{App.t=B.duration;App.playing=false;$('#pBtn').textContent='▶'}}
   }
-  if(B)drawNow();requestAnimationFrame(loop);
+  if(B)drawNow();requestAnimationFrame(loop);pollMcpBridge();
 }
 function setAnim(n,keepPlay){
   App.anim=n;App.t=0;if(!keepPlay){App.playing=true;$('#pBtn').textContent='⏸'}
   document.querySelectorAll('#animTabs button').forEach(b=>b.classList.toggle('on',b.dataset.a===n));
+  document.querySelectorAll('#quickFbBar .fb-btn').forEach(b=>b.classList.toggle('on',b.dataset.a.toLowerCase()===n.toLowerCase()));
   buildRegionList();if(App.sel.kind==='anim')buildInspector();
 }
 function drawGuides(){
@@ -531,15 +623,171 @@ function buildInspector(){
   if(k==='extra'){const ex=App.extras.find(e=>e.id===App.sel.id);if(ex)return inspExtra(p,ex)}
   inspAnim(p);
 }
-function inspAnim(p){
-  const n=App.anim,o=aovOf(n);UI.title(p,'Animación: '+(FB_LABEL[n]||n),'<span class="badge u">Unity</span>');
-  UI.range(p,'Velocidad',o,'timeScale',.3,3,.05,()=>{},false);
-  UI.range(p,'Escala global',o,'scale',.3,2.5,.05);UI.num(p,'Offset X',o,'ox',-500,500,1);UI.num(p,'Offset Y',o,'oy',-500,500,1);
-  UI.check(p,'Extender duración',o,'extend');
-  UI.hint(p,`Duración original: <b>${App.lfx.animations[n].duration.toFixed(3)}s</b> · plantilla <b>${App.tplName}</b> · ${App.lfx.animations[n].tracks.length} capas animadas.`);
-  UI.btn(p,'Copiar ajustes a todos los feedbacks',()=>{for(const a of Object.keys(App.lfx.animations))Object.assign(aovOf(a),{scale:o.scale,ox:o.ox,oy:o.oy,extend:o.extend});touch();toast('Copiado')});
-  UI.hint(p,'<br><b>Cómo se usa</b>: elige una región a la izquierda (texto o FX) para cambiar su textura, escribir texto, teñirla o ocultarla. Añade capas extra para fondos y partículas con tus texturas.');
+
+/* ====================== paletas y diseñador rápido ====================== */
+const PALETTES = [
+  { name: '⚡ Cyber Neon', f0: '#00f0ff', f1: '#ff0077', stroke: '#02131a', glow: '#00f0ff', sw: 10, gb: 20 },
+  { name: '👑 Golden JD', f0: '#ffd700', f1: '#ffffff', stroke: '#2e1800', glow: '#ffaa00', sw: 11, gb: 24 },
+  { name: '🌿 Emerald Shine', f0: '#00ff88', f1: '#ffffff', stroke: '#022415', glow: '#00cc66', sw: 10, gb: 18 },
+  { name: '🍬 Sweet Candy', f0: '#ff77aa', f1: '#77ddff', stroke: '#2e0825', glow: '#ff55aa', sw: 10, gb: 20 },
+  { name: '🔥 Inferno Flame', f0: '#ff6600', f1: '#ffcc00', stroke: '#330800', glow: '#ff3300', sw: 12, gb: 26 },
+  { name: '💜 Ultra Violet', f0: '#b300ff', f1: '#00ffff', stroke: '#15022e', glow: '#8800ff', sw: 10, gb: 22 }
+];
+
+function findMainTextRegion(fb){
+  if(!App.lfx||!App.lfx.regions) return null;
+  const map = {
+    Perfect: ['PERFECT', 'perfect'],
+    Super: ['SUPER', 'super'],
+    Good: ['GOOD', 'good'],
+    Ok: ['OK', 'ok'],
+    Bad: ['MISS', 'bad', 'Bad', 'miss'],
+    Miss: ['MISS', 'bad', 'Bad', 'miss'],
+    Gold: ['YEAH', 'gold', 'Gold', 'yeah'],
+    Yeah: ['YEAH', 'gold', 'Gold', 'yeah'],
+    GoldMiss: ['GOLDMISS', 'goldmiss', 'GoldMiss']
+  };
+  const cand = map[fb] || [fb.toUpperCase(), fb];
+  for(const c of cand) if(App.lfx.regions[c]) return c;
+  for(const r of Object.keys(App.lfx.regions)) if(cand.some(c=>r.toUpperCase().includes(c.toUpperCase()))) return r;
+  return Object.keys(App.lfx.regions)[0] || null;
 }
+
+function applyPaletteToCurrent(p){
+  const reg = findMainTextRegion(App.anim);
+  if(!reg){toast('No se encontró región de texto para '+App.anim);return}
+  const ov = ovOf(reg);
+  ov.mode = 'text';
+  if(!ov.text) ov.text = defaultText(reg);
+  ov.text.fillTop = p.f0;
+  ov.text.fillBottom = p.f1;
+  ov.text.strokeColor = p.stroke;
+  ov.text.glowColor = p.glow;
+  ov.text.strokeW = p.sw;
+  ov.text.glowBlur = p.gb;
+  touch(true);
+  buildInspector();
+  toast('Paleta "' + p.name + '" aplicada a ' + App.anim);
+}
+
+function inspAnim(p){
+  const n=App.anim, ao=aovOf(n);
+  
+  // 1. Título y Selector de Paletas Rápidas
+  UI.title(p, 'Diseñador: ' + (FB_LABEL[n] || n), '<span class="badge u">En Vivo</span>');
+  
+  const palCard = document.createElement('div');
+  palCard.className = 'panel-box';
+  palCard.innerHTML = '<h5>🎨 Paletas Rápidas (1 Clic) <span style="color:var(--mut);font-size:9.5px">Estilos coordinados</span></h5>';
+  const palWrap = document.createElement('div');
+  palWrap.className = 'pal-wrap';
+  for(const pal of PALETTES){
+    const chip = document.createElement('div');
+    chip.className = 'pal-chip';
+    chip.innerHTML = `<span class="pal-dot" style="background:${pal.f0}"></span><span>${pal.name}</span>`;
+    chip.onclick = () => applyPaletteToCurrent(pal);
+    palWrap.append(chip);
+  }
+  palCard.append(palWrap);
+  p.append(palCard);
+
+  // 2. Editor Rápido del Texto del Feedback
+  const textReg = findMainTextRegion(n);
+  if(textReg){
+    const ov = ovOf(textReg);
+    if(ov.mode !== 'text' && !ov.text) ov.text = defaultText(textReg);
+    const txt = ov.text;
+    
+    const textCard = document.createElement('div');
+    textCard.className = 'panel-box';
+    textCard.innerHTML = `<h5>🔤 Texto & Tipografía (${textReg}) <button class="sm" id="btnEditFullReg" style="font-size:10px">Ver Región Atlas</button></h5>`;
+    textCard.querySelector('#btnEditFullReg').onclick = () => { App.sel = { kind:'region', id:textReg }; buildInspector(); };
+
+    UI.select(textCard, 'Modo Región', ov, 'mode', [['text', 'Texto Personalizado'], ['orig', 'Textura Original'], ['tex', 'Textura Importada']], () => { touch(true); buildInspector(); }, true);
+
+    if(ov.mode === 'text' && txt){
+      UI.text(textCard, 'Texto', txt, 'text', () => { touch(true); buildRegionList(); }, true);
+      UI.select(textCard, 'Tipografía', txt, 'font', App.fonts.map(f => [f, f]), () => { touch(true); }, true);
+      UI.color(textCard, 'Degradado Arriba', txt, 'fillTop', null, true);
+      UI.color(textCard, 'Degradado Abajo', txt, 'fillBottom', null, true);
+      UI.color(textCard, 'Contorno', txt, 'strokeColor', null, true);
+      UI.range(textCard, 'Grosor Contorno', txt, 'strokeW', 0, 24, 1, null, true);
+      UI.color(textCard, 'Color Glow', txt, 'glowColor', null, true);
+      UI.range(textCard, 'Resplandor Glow', txt, 'glowBlur', 0, 50, 1, null, true);
+      UI.range(textCard, 'Extrusión 3D', txt, 'depth', 0, 16, 1, null, true);
+    }
+    p.append(textCard);
+  }
+
+  // 3. Control Rápido de Partículas
+  const partCard = document.createElement('div');
+  partCard.className = 'panel-box';
+  let curEm = App.extras.find(e => e.type === 'emitter' && e.anims.includes(n));
+  partCard.innerHTML = `<h5>✨ Partículas de ${n}</h5>`;
+  
+  if(!curEm){
+    UI.btn(partCard, '+ Añadir Ráfaga de Partículas para ' + n, () => {
+      const em = newEmitter();
+      em.anims = [n];
+      const sid = addTexture('Estrella', (() => { const k = mk(128, 128); SHAPES['Estrella'](k.getContext('2d'), 128); return k; })());
+      em.texId = sid;
+      App.extras.push(em);
+      buildExList();
+      buildInspector();
+      touch(true);
+    }, 'ok');
+  } else {
+    UI.range(partCard, 'Cantidad', curEm, 'count', 5, 80, 1, null, true);
+    UI.range(partCard, 'Velocidad', curEm, 'spdA', 50, 800, 10, () => { curEm.spdB = curEm.spdA * 1.8; }, true);
+    UI.range(partCard, 'Gravedad', curEm, 'grav', -600, 600, 10, null, true);
+    UI.color(partCard, 'Color Inicio', curEm, 'colA', null, true);
+    UI.color(partCard, 'Color Fin', curEm, 'colB', null, true);
+    UI.check(partCard, 'Blend Aditivo', curEm, 'additive', null, true);
+    UI.btn(partCard, 'Configuración Avanzada de Partículas', () => { App.sel = { kind:'extra', id:curEm.id }; buildInspector(); });
+  }
+  p.append(partCard);
+
+  // 4. Rayos y Fondos Extra
+  const bgCard = document.createElement('div');
+  bgCard.className = 'panel-box';
+  let curBg = App.extras.find(e => e.type === 'bg' && e.anims.includes(n));
+  bgCard.innerHTML = `<h5>💫 Rayos & Ondas de Fondo</h5>`;
+  if(!curBg){
+    UI.btn(bgCard, '+ Añadir Rayos Giratorios para ' + n, () => {
+      const bg = newBg();
+      bg.anims = [n];
+      bg.spin = 60;
+      const sid = addTexture('Destello', (() => { const k = mk(128, 128); SHAPES['Destello'](k.getContext('2d'), 128); return k; })());
+      bg.texId = sid;
+      App.extras.push(bg);
+      buildExList();
+      buildInspector();
+      touch(true);
+    });
+  } else {
+    UI.range(bgCard, 'Giro °/s', curBg, 'spin', -360, 360, 5, null, true);
+    UI.range(bgCard, 'Escala Salida', curBg, 'exitScale', 0.5, 2.5, 0.05, null, true);
+    UI.color(bgCard, 'Tinte Fondo', curBg, 'tint', null, true);
+    UI.btn(bgCard, 'Configuración Avanzada de Fondo', () => { App.sel = { kind:'extra', id:curBg.id }; buildInspector(); });
+  }
+  p.append(bgCard);
+
+  // 5. Ajustes Globales de Animación
+  const globCard = document.createElement('div');
+  globCard.className = 'panel-box';
+  globCard.innerHTML = '<h5>⚡ Tiempo & Escala</h5>';
+  UI.range(globCard, 'Velocidad (TimeScale)', ao, 'timeScale', 0.2, 3.0, 0.05, () => {}, false);
+  UI.range(globCard, 'Escala Global', ao, 'scale', 0.3, 2.5, 0.05);
+  UI.num(globCard, 'Offset X', ao, 'ox', -500, 500, 1);
+  UI.num(globCard, 'Offset Y', ao, 'oy', -500, 500, 1);
+  UI.btn(globCard, 'Aplicar esta escala a los 7 feedbacks', () => {
+    for(const a of Object.keys(App.lfx.animations)) Object.assign(aovOf(a), { scale:ao.scale, ox:ao.ox, oy:ao.oy });
+    touch();
+    toast('Escala aplicada a todos');
+  });
+  p.append(globCard);
+}
+
 function inspRegion(p,n){
   const o=ovOf(n),rg=App.lfx.regions[n];
   UI.title(p,'Región: '+n,'<span class="badge s">Spine</span><span class="badge u">Unity</span>');
@@ -637,11 +885,22 @@ function flatten(B){
 }
 function buildLfx(){
   const n=baseName(),files=pageFiles(n);if(App.pagesDirty)composePages();
-  const names=Object.keys(App.lfx.animations),anims=names.map(a=>flatten(bakeAnim(a)));
+  const names=Object.keys(App.lfx.animations);
+  const animsDict={};
+  for(const a of names){
+    const B=bakeAnim(a);
+    animsDict[a]={
+      name: a,
+      duration: +B.duration.toFixed(4),
+      tracks: B.tracks.map(t=>({slot:t.slot!==undefined?t.slot:0,blend:t.blend||'normal',frames:t.frames}))
+    };
+  }
   const atts=allAtts();
   return{format:'LiamFX',version:2,name:n,template:App.tplName,fps:FPS,
     pages:App.pages.map((c,i)=>({file:files[i],w:c.width,h:c.height})),
-    attachments:atts.map(a=>({page:a.page,nv:a.nv,uvs:a.uvs.map(u=>+u.toFixed(5)),tris:a.tris})),animations:anims};
+    slots:App.lfx.slots||[],
+    attachments:atts.map(a=>({slot:a.slot!==undefined?a.slot:0,name:a.name||a.region,region:a.region,page:a.page,nv:a.nv,uvs:a.uvs.map(u=>+u.toFixed(5)),tris:a.tris})),
+    animations:animsDict};
 }
 function spineAtlas(n){
   const L=App.lfx;let s='';
@@ -664,11 +923,79 @@ async function thumbnailBlob(){
   return canvasBlob(c);
 }
 async function exportUnity(){
-  const n=baseName(),lfx=buildLfx(),files=[{name:n+'.lfx.json',data:new TextEncoder().encode(JSON.stringify(lfx))}];
-  for(let i=0;i<App.pages.length;i++)files.push({name:lfx.pages[i].file,data:new Uint8Array(await (await canvasBlob(App.pages[i])).arrayBuffer())});
-  files.push({name:'LEEME.txt',data:new TextEncoder().encode(readme(n))});
-  download(n+'_Unity.zip',zip(files));toast('ZIP Unity listo');
+  const n=baseName(),lfx=buildLfx(),files=[];
+  const root = n + '/';
+  files.push({name: root + n + '.lfx.json', data: new TextEncoder().encode(JSON.stringify(lfx, null, 2))});
+  for(let i=0;i<App.pages.length;i++){
+    files.push({name: root + lfx.pages[i].file, data: new Uint8Array(await (await canvasBlob(App.pages[i])).arrayBuffer())});
+  }
+  files.push({name: root + 'README_UNITY.txt', data: new TextEncoder().encode(readme(n))});
+
+  // Intentar incluir los scripts de Unity desde la carpeta Unity/ si están accesibles por HTTP
+  try {
+    const scripts = [
+      'LiamFXData.cs', 'LiamFXPlayer.cs', 'LiamFXCanvasGraphic.cs',
+      'Editor/LiamFXPlayerEditor.cs', 'Editor/LiamFXReviewWindow.cs',
+      'Shaders/LiamFXNormal.shader', 'Shaders/LiamFXAdditive.shader'
+    ];
+    for(const s of scripts){
+      try {
+        const r = await fetch('Unity/' + s);
+        if(r.ok){
+          const bytes = await r.arrayBuffer();
+          files.push({ name: root + 'LiamFX_Runtime/' + s, data: new Uint8Array(bytes) });
+        }
+      } catch(e){}
+    }
+  } catch(e){}
+
+  download(n+'_Unity.zip',zip(files));toast('¡ZIP de Unity descargado con éxito!');
 }
+
+async function exportUnityDirect(){
+  if(!window.showDirectoryPicker){
+    toast('Tu navegador no soporta selección directa de carpetas. Usa "Descargar ZIP".');
+    return;
+  }
+  try {
+    const dirHandle = await window.showDirectoryPicker();
+    const n = baseName(), lfx = buildLfx();
+    const targetDir = await dirHandle.getDirectoryHandle(n, { create: true });
+    
+    // Guardar .lfx.json
+    const jsonHandle = await targetDir.getFileHandle(n + '.lfx.json', { create: true });
+    const jWr = await jsonHandle.createWritable();
+    await jWr.write(JSON.stringify(lfx, null, 2));
+    await jWr.close();
+    
+    // Guardar PNGs
+    if(App.pagesDirty) composePages();
+    for(let i=0; i<App.pages.length; i++){
+      const pageBlob = await canvasBlob(App.pages[i]);
+      const fHandle = await targetDir.getFileHandle(lfx.pages[i].file, { create: true });
+      const wr = await fHandle.createWritable();
+      await wr.write(pageBlob);
+      await wr.close();
+    }
+    
+    // Guardar README
+    const rdHandle = await targetDir.getFileHandle('README_UNITY.txt', { create: true });
+    const rdWr = await rdHandle.createWritable();
+    await rdWr.write(readme(n));
+    await rdWr.close();
+    
+    toast('¡Exportado directamente a tu carpeta de Unity!');
+  } catch(err){
+    if(err.name !== 'AbortError') toast('Error: ' + err.message);
+  }
+}
+
+function copyCSharp(){
+  const n = baseName();
+  const code = `using UnityEngine;\nusing LiamFX;\n\npublic class ScoringController : MonoBehaviour\n{\n    [Header("Asigna el LiamFXPlayer (3D) o LiamFXCanvasGraphic (UI)")]\n    public LiamFXPlayer scoringPlayer;\n\n    public void OnJudgeMove(ScoringFeedbackType judgment)\n    {\n        scoringPlayer.Play(judgment);\n    }\n}`;
+  navigator.clipboard.writeText(code).then(() => toast('Código C# copiado al portapapeles')).catch(() => toast('No se pudo copiar'));
+}
+
 async function exportSpine(){
   if(!App.skel){toast('Esta plantilla no trae el .skel original; cárgalo desde la biblioteca');return}
   const n=baseName();if(App.pagesDirty)composePages();const files=[];
@@ -697,7 +1024,152 @@ async function openProject(file){
   rebuildAll();toast('Proyecto cargado');
 }
 /* ====================== eventos ====================== */
+
+/* ====================== MCP Bridge Client ====================== */
+async function pollMcpBridge() {
+  const mcpBadge = $('#mcpBadge');
+  while (true) {
+    try {
+      const res = await fetch('/bridge/poll', { cache: 'no-store' });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json();
+      if (mcpBadge) {
+        mcpBadge.textContent = '🟢 MCP Conectado';
+        mcpBadge.className = 'mcp-pill on';
+      }
+      if (data && data.id && data.command) {
+        const result = await handleBridgeCommand(data.command.action, data.command.params);
+        await fetch('/bridge/result', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: data.id, result })
+        });
+      }
+    } catch (err) {
+      if (mcpBadge) {
+        mcpBadge.textContent = '⚪ MCP Offline';
+        mcpBadge.className = 'mcp-pill off';
+      }
+      await new Promise(r => setTimeout(r, 2500));
+    }
+  }
+}
+
+async function handleBridgeCommand(action, params) {
+  params = params || {};
+  try {
+    switch(action) {
+      case 'capture_screenshot': {
+        if (params.feedback) setAnim(params.feedback, true);
+        if (params.background) $('#stage').className = params.background;
+        const B = curBake();
+        if (params.time !== undefined && B) App.t = clamp(params.time, 0, B.duration);
+        else if (B) App.t = B.duration * 0.4;
+        drawNow();
+        const dataUrl = $('#gl').toDataURL('image/png');
+        return { ok: true, screenshot: { dataUrl }, feedback: App.anim, time: App.t };
+      }
+      case 'get_state': {
+        const B = curBake();
+        return {
+          ok: true,
+          state: {
+            tplName: App.tplName,
+            feedback: App.anim,
+            duration: B ? B.duration : 0,
+            overrides: App.regionOv,
+            animOverrides: App.animOv,
+            extrasCount: App.extras.length,
+            availableTemplates: window._templateNames || []
+          }
+        };
+      }
+      case 'load_template': {
+        const name = params.templateName;
+        await loadTemplateUrl(`Library/${name}/`, name);
+        $('#tplSel').value = name;
+        App.t = curBake() ? curBake().duration * 0.4 : 0;
+        drawNow();
+        return { ok: true, tplName: name, screenshot: { dataUrl: $('#gl').toDataURL('image/png') } };
+      }
+      case 'customize_feedback': {
+        const fb = params.feedback || App.anim;
+        setAnim(fb, true);
+        const textRegionName = findMainTextRegion(fb);
+        if (textRegionName) {
+          const ov = ovOf(textRegionName);
+          ov.mode = 'text';
+          if (!ov.text) ov.text = defaultText(textRegionName);
+          if (params.text) ov.text.text = params.text;
+          if (params.font) ov.text.font = params.font;
+          if (params.primaryColor) ov.text.fillTop = params.primaryColor;
+          if (params.secondaryColor) ov.text.fillBottom = params.secondaryColor;
+          if (params.strokeColor) ov.text.strokeColor = params.strokeColor;
+          if (params.strokeWidth !== undefined) ov.text.strokeW = params.strokeWidth;
+          if (params.glowColor) ov.text.glowColor = params.glowColor;
+          if (params.glowBlur !== undefined) ov.text.glowBlur = params.glowBlur;
+          if (params.extrudeDepth !== undefined) ov.text.depth = params.extrudeDepth;
+        }
+        if (params.timeScale !== undefined) {
+          aovOf(fb).timeScale = params.timeScale;
+        }
+        touch(true);
+        App.t = curBake() ? curBake().duration * 0.4 : 0;
+        drawNow();
+        return { ok: true, feedback: fb, screenshot: { dataUrl: $('#gl').toDataURL('image/png') } };
+      }
+      case 'configure_particles': {
+        const fb = params.feedback || App.anim;
+        setAnim(fb, true);
+        let em = App.extras.find(e => e.type === 'emitter' && e.anims.includes(fb));
+        if (!em) {
+          em = newEmitter();
+          em.anims = [fb];
+          App.extras.push(em);
+        }
+        if (params.shape && SHAPES[params.shape]) {
+          const c = mk(128, 128);
+          SHAPES[params.shape](c.getContext('2d'), 128);
+          em.texId = addTexture(params.shape, c);
+        }
+        if (params.count) em.count = params.count;
+        if (params.colorA) em.colA = params.colorA;
+        if (params.colorB) em.colB = params.colorB;
+        if (params.additive !== undefined) em.additive = params.additive;
+        if (params.gravity !== undefined) em.grav = params.gravity;
+        if (params.speed !== undefined) { em.spdA = params.speed * 0.5; em.spdB = params.speed * 1.5; }
+        touch(true);
+        App.t = curBake() ? curBake().duration * 0.4 : 0;
+        drawNow();
+        return { ok: true, feedback: fb, emitterId: em.id, screenshot: { dataUrl: $('#gl').toDataURL('image/png') } };
+      }
+      case 'export_unity_bundle': {
+        const n = baseName();
+        const lfx = buildLfx();
+        if (App.pagesDirty) composePages();
+        const pages = [];
+        for (let i = 0; i < App.pages.length; i++) {
+          pages.push({ file: lfx.pages[i].file, dataUrl: App.pages[i].toDataURL('image/png') });
+        }
+        return { ok: true, bundle: { name: n, lfx, pages } };
+      }
+      default:
+        return { ok: false, error: 'Acción desconocida: ' + action };
+    }
+  } catch(err) {
+    return { ok: false, error: String(err && err.message || err) };
+  }
+}
+
 function bindEvents(){
+  $('#tabBtnUnity').onclick = () => { $('.tab-pane.on').classList.remove('on'); $('#paneUnity').classList.add('on'); $('#tabBtnUnity').classList.add('on'); $('#tabBtnSpine').classList.remove('on'); $('#tabBtnLoose').classList.remove('on'); };
+  $('#tabBtnSpine').onclick = () => { $('.tab-pane.on').classList.remove('on'); $('#paneSpine').classList.add('on'); $('#tabBtnSpine').classList.add('on'); $('#tabBtnUnity').classList.remove('on'); $('#tabBtnLoose').classList.remove('on'); };
+  $('#tabBtnLoose').onclick = () => { $('.tab-pane.on').classList.remove('on'); $('#paneLoose').classList.add('on'); $('#tabBtnLoose').classList.add('on'); $('#tabBtnUnity').classList.remove('on'); $('#tabBtnSpine').classList.remove('on'); };
+  $('#exUnityDirect').onclick = exportUnityDirect;
+  $('#copyCSharp').onclick = copyCSharp;
+  document.querySelectorAll('#quickFbBar .fb-btn').forEach(btn => {
+    btn.onclick = () => setAnim(btn.dataset.a);
+  });
   $('#tplSel').onchange=async e=>{if(e.target.value)try{await loadTemplateUrl(`Library/${e.target.value}/`,e.target.value)}catch(err){toast('Error: '+err.message)}};
   $('#tplFile').onchange=e=>loadTemplateFiles(e.target.files);
   $('#projFile').onchange=e=>openProject(e.target.files[0]);$('#saveProj').onclick=saveProject;
@@ -734,7 +1206,7 @@ async function init(){
   GLR.init();buildShapeBtns();bindEvents();requestAnimationFrame(loop);
   try{const f=await fetch('Library/fonts/JustDanceBold.ttf');if(f.ok){const ff=new FontFace('JustDanceBold',await f.arrayBuffer());await ff.load();document.fonts.add(ff);App.fonts.unshift('JustDanceBold')}}catch(e){}
   try{
-    const idx=await (await fetch('Library/library_index.json')).json();App.hasLibrary=true;
+    const idx=await (await fetch('Library/library_index.json')).json();App.hasLibrary=true;window._templateNames=idx.map(i=>i.name);
     const s=$('#tplSel');s.innerHTML='<option value="">— plantilla original —</option>'+idx.map(i=>`<option value="${i.name}">${i.name}</option>`).join('');
     const q=new URLSearchParams(location.search);const first=q.get('tpl')||'Basic';
     if(idx.some(i=>i.name===first)){s.value=first;await loadTemplateUrl(`Library/${first}/`,first)}
@@ -755,7 +1227,7 @@ async function selfTest(){
     ovOf('fx_particles').mode='tex';ovOf('fx_particles').texId=sid;
     touch(true);const B2=bakeAnim('Perfect');step('bake con extras',B2.tracks.length>B.tracks.length+20,B2.tracks.length+' capas');
     App.t=B2.duration*.4;drawNow();
-    const lfx=buildLfx();step('export lfx v2',lfx.animations.length===7&&lfx.pages.length===2,lfx.pages.map(p=>p.file+' '+p.w).join(','));
+    const lfx=buildLfx();step('export lfx v2',(lfx.animations.length===7||Object.keys(lfx.animations).length===7)&&lfx.pages.length===2,lfx.pages.map(p=>p.file+' '+p.w).join(','));
     const j=JSON.stringify(lfx);step('tamano json',j.length>1000,(j.length/1024|0)+' KB');
     step('atlas spine',/ScoringFX_Custom\.png/.test(spineAtlas('ScoringFX_Custom'))||true,'ok');
     App.t=B2.duration*.4;App.sel={kind:'region',id:'PERFECT'};buildRegionList();buildInspector();

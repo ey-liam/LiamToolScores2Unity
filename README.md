@@ -1,9 +1,28 @@
-# LiamToolScores2Unity V3.0
+# LiamToolScores2Unity V3.5
 
-Herramienta web profesional para crear, personalizar, previsualizar y exportar efectos de puntuación (**ScoringFX**) de Just Dance directamente a Unity y al juego.
+Herramienta web profesional para crear, personalizar, previsualizar y exportar efectos de puntuación (**ScoringFX**) de Just Dance directamente a Unity y al juego. Incluye integración en tiempo real con servidor **MCP (Model Context Protocol)** para automatización e inspección con Inteligencia Artificial.
 
 - **GitHub Pages**: https://ey-liam.github.io/LiamToolScores2Unity/
 - **Repositorio**: https://github.com/ey-liam/LiamToolScores2Unity
+
+---
+
+## Novedades en V3.5
+
+- **Servidor MCP Integrado (`mcp-server.js`)**:
+  - Servidor dual STDIO / HTTP (`port 17421`) que permite a la IA interactuar directamente con la herramienta abierta en el navegador.
+  - Herramientas MCP soportadas: `scores_capture_screenshot`, `scores_get_state`, `scores_load_template`, `scores_customize_feedback`, `scores_configure_particles` y `scores_export_unity_bundle`.
+  - Indicador visual reactivo en la barra superior (badge de estado MCP en tiempo real).
+- **Barra Rápida de Juicios de Feedback**:
+  - Selector superior de un clic con insignias oficiales coloreadas: ⭐ PERFECT, 💚 SUPER, 💙 GOOD, 💛 OK, ❌ MISS, 🏆 YEAH! y ⚠ GOLD MISS.
+- **Paletas de Color Rápidas (1 Clic)**:
+  - Presets coordinados instantáneos: *⚡ Cyber Neon*, *👑 Golden JD*, *🌿 Emerald Shine*, *🍬 Sweet Candy*, *🔥 Inferno Flame* y *💜 Ultra Violet*.
+- **Diseñador Intuitivo de Feedback en el Inspector**:
+  - Controles unificados sin tener que buscar regiones ocultas del atlas: texto personalizado, tipografía, gradiente superior/inferior, doble contorno, glow exterior y extrusión 3D.
+- **Exportación Directa a Carpetas de Unity**:
+  - Soporte de la Web File System Access API para guardar el paquete exportado directamente en tu carpeta `Assets/` de Unity sin necesidad de descargar ni descomprimir archivos manualmente.
+- **Botón de Copia Rápida de Código C#**:
+  - Generador de snippets de código listo para pegar en el controlador del juego.
 
 ---
 

@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "liam-scores2unity": {
+      "command": "node",
+      "args": [
+        "C:/Users/liamc/Documents/LiamToolScores2Unity/mcp-server.js"
+      ]
+    }
+  }
+}

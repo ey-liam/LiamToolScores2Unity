@@ -1,0 +1,270 @@
+[
+ {
+  "name": "Aqua",
+  "file": "Aqua/Aqua.lfx.json",
+  "animations": [
+   "Bad",
+   "Gold",
+   "GoldMiss",
+   "Good",
+   "Ok",
+   "Perfect",
+   "Super"
+  ]
+ },
+ {
+  "name": "Basic",
+  "file": "Basic/Basic.lfx.json",
+  "animations": [
+   "Bad",
+   "Gold",
+   "GoldMiss",
+   "Good",
+   "Ok",
+   "Perfect",
+   "Super"
+  ]
+ },
+ {
+  "name": "Candy",
+  "file": "Candy/Candy.lfx.json",
+  "animations": [
+   "Bad",
+   "Gold",
+   "GoldMiss",
+   "Good",
+   "Ok",
+   "Perfect",
+   "Super"
+  ]
+ },
+ {
+  "name": "Celebration",
+  "file": "Celebration/Celebration.lfx.json",
+  "animations": [
+   "Bad",
+   "Gold",
+   "GoldMiss",
+   "Good",
+   "Ok",
+   "Perfect",
+   "Super"
+  ]
+ },
+ {
+  "name": "Christmas",
+  "file": "Christmas/Christmas.lfx.json",
+  "animations": [
+   "Bad",
+   "Gold",
+   "GoldMiss",
+   "Good",
+   "Ok",
+   "Perfect",
+   "Super"
+  ]
+ },
+ {
+  "name": "Confetti",
+  "file": "Confetti/Confetti.lfx.json",
+  "animations": [
+   "Bad",
+   "Gold",
+   "GoldMiss",
+   "Good",
+   "Ok",
+   "Perfect",
+   "Super"
+  ]
+ },
+ {
+  "name": "Flamepassion",
+  "file": "Flamepassion/Flamepassion.lfx.json",
+  "animations": [
+   "Bad",
+   "Gold",
+   "GoldMiss",
+   "Good",
+   "Ok",
+   "Perfect",
+   "Super"
+  ]
+ },
+ {
+  "name": "Flower",
+  "file": "Flower/Flower.lfx.json",
+  "animations": [
+   "Bad",
+   "Gold",
+   "GoldMiss",
+   "Good",
+   "Ok",
+   "Perfect",
+   "Super"
+  ]
+ },
+ {
+  "name": "Glitter",
+  "file": "Glitter/Glitter.lfx.json",
+  "animations": [
+   "Bad",
+   "Gold",
+   "GoldMiss",
+   "Good",
+   "Ok",
+   "Perfect",
+   "Super"
+  ]
+ },
+ {
+  "name": "Halloween",
+  "file": "Halloween/Halloween.lfx.json",
+  "animations": [
+   "Bad",
+   "Gold",
+   "GoldMiss",
+   "Good",
+   "Ok",
+   "Perfect",
+   "Super"
+  ]
+ },
+ {
+  "name": "Heartlove",
+  "file": "Heartlove/Heartlove.lfx.json",
+  "animations": [
+   "Bad",
+   "Gold",
+   "GoldMiss",
+   "Good",
+   "Ok",
+   "Perfect",
+   "Super"
+  ]
+ },
+ {
+  "name": "Megastar",
+  "file": "Megastar/Megastar.lfx.json",
+  "animations": [
+   "MegaStar",
+   "SuperStar"
+  ]
+ },
+ {
+  "name": "Memphis",
+  "file": "Memphis/Memphis.lfx.json",
+  "animations": [
+   "Bad",
+   "Gold",
+   "GoldMiss",
+   "Good",
+   "Ok",
+   "Perfect",
+   "Super"
+  ]
+ },
+ {
+  "name": "Neon",
+  "file": "Neon/Neon.lfx.json",
+  "animations": [
+   "Bad",
+   "Gold",
+   "GoldMiss",
+   "Good",
+   "Ok",
+   "Perfect",
+   "Super"
+  ]
+ },
+ {
+  "name": "Olympus",
+  "file": "Olympus/Olympus.lfx.json",
+  "animations": [
+   "Bad",
+   "Gold",
+   "GoldMiss",
+   "Good",
+   "Ok",
+   "Perfect",
+   "Super"
+  ]
+ },
+ {
+  "name": "RoadTrip",
+  "file": "RoadTrip/RoadTrip.lfx.json",
+  "animations": [
+   "Bad",
+   "Gold",
+   "GoldMiss",
+   "Good",
+   "Ok",
+   "Perfect",
+   "Super"
+  ]
+ },
+ {
+  "name": "Rosemolding",
+  "file": "Rosemolding/Rosemolding.lfx.json",
+  "animations": [
+   "Bad",
+   "Gold",
+   "GoldMiss",
+   "Good",
+   "Ok",
+   "Perfect",
+   "Super"
+  ]
+ },
+ {
+  "name": "SparkleFirework",
+  "file": "SparkleFirework/SparkleFirework.lfx.json",
+  "animations": [
+   "Bad",
+   "Gold",
+   "GoldMiss",
+   "Good",
+   "Ok",
+   "Perfect",
+   "Super"
+  ]
+ },
+ {
+  "name": "TropicalPlants",
+  "file": "TropicalPlants/TropicalPlants.lfx.json",
+  "animations": [
+   "Bad",
+   "Gold",
+   "GoldMiss",
+   "Good",
+   "Ok",
+   "Perfect",
+   "Super"
+  ]
+ },
+ {
+  "name": "Unicorn",
+  "file": "Unicorn/Unicorn.lfx.json",
+  "animations": [
+   "Bad",
+   "Gold",
+   "GoldMiss",
+   "Good",
+   "Ok",
+   "Perfect",
+   "Super"
+  ]
+ },
+ {
+  "name": "Y2K",
+  "file": "Y2K/Y2K.lfx.json",
+  "animations": [
+   "Bad",
+   "Gold",
+   "GoldMiss",
+   "Good",
+   "Ok",
+   "Perfect",
+   "Super"
+  ]
+ }
+]

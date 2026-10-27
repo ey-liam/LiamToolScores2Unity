@@ -1,0 +1,12 @@
+ScoringFX_Megastar.png
+size:1024,1024
+filter:Linear,Linear
+pma:true
+MegaStar
+bounds:2,491,543,76
+MegaStar_back
+bounds:2,321,554,88
+SuperStar
+bounds:2,411,555,78
+SuperStar_back
+bounds:2,231,565,88

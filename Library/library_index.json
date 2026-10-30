@@ -1,5 +1,20 @@
 [
   {
+    "name": "Custom_Scratch",
+    "file": "Custom_Scratch/Custom_Scratch.lfx.json",
+    "animations": [
+      "Bad",
+      "Gold",
+      "GoldMiss",
+      "Good",
+      "Ok",
+      "Perfect",
+      "Super"
+    ],
+    "group": "custom",
+    "thumb": "Custom_Scratch/ScoringFX_Thumbnail_Custom_Scratch.png"
+  },
+  {
     "name": "JD4",
     "file": "JD4/JD4.lfx.json",
     "animations": [
@@ -28,19 +43,6 @@
     ],
     "group": "classic",
     "thumb": "JD2014_2016/ScoringFX_Thumbnail_JD2014_2016.png"
-  },
-  {
-    "name": "Custom_Scratch",
-    "file": "Custom_Scratch/Custom_Scratch.lfx.json",
-    "animations": [
-      "Bad",
-      "Gold",
-      "GoldMiss",
-      "Good",
-      "Ok",
-      "Perfect",
-      "Super"
-    ]
   },
   {
     "name": "Aqua",

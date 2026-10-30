@@ -1,4 +1,4 @@
-# LiamToolScores2Unity V4.0
+# LiamToolScores2Unity V4.1
 
 Herramienta web profesional para crear, personalizar, previsualizar y exportar efectos de puntuación (**ScoringFX**) de Just Dance directamente a Unity y al juego. Incluye integración en tiempo real con servidor **MCP (Model Context Protocol)** para automatización e inspección con Inteligencia Artificial.
 
@@ -7,18 +7,22 @@ Herramienta web profesional para crear, personalizar, previsualizar y exportar e
 
 ---
 
-## Novedades en V4.0
+## Novedades en V4.1 (Texturas y Animaciones Reales UbiArt JD 2014–2016 & JD 4)
 
-- **Packs clasicos con animaciones propias** (no reutilizan las de Classic): `JD4` y `JD2014_2016`, con columnas de color, burbujas/bokeh grandes alrededor de GOOD, ecualizador laser de PERFECT (JD14), rayos radiales (JD4), sunburst de 16 rayos en YEAH, chispas y onda expansiva.
-- **SUPER nuevo** (no existia en JD4 ni JD14): celeste claro entre Good y Perfect, con rayos, burbujas y destellos propios.
-- **`Custom_Scratch`**: pack neutro para crear scores desde cero.
-- **Galeria de packs** (boton `Packs` o tecla `P`) con miniaturas, busqueda y filtros.
-- **Generador de capas con presets**: Chispas, Rafaga radial, Burbujas, Confeti, Sunburst, Columna y Ecualizador (un clic), mas 4 formas nuevas.
-- **UI**: secciones plegables, atajos (Espacio, 1-7, flechas, P) y las 4 fuentes cargadas.
-- **Motor reproducible**: `tools/fxgen.py` genera los packs (`python tools/fxgen.py`); `tools/preview_lfx.py` renderiza hojas de contacto para revisar sin abrir el navegador.
+- **`JD2014_2016` reconstruido 1:1 con los assets y timelines originales de UbiArt (`2014 UI TEXTURES`)**:
+  - **Texturas oficiales decodificadas** de `.tga.ckd` (DDS DXT1/DXT5) y PNGs nativos: `ui_hud_wdg_feedback_*_text.png`, `grad_v_coach.png`, `ui_com_barcode.png`, `ui_com_fx_lens_bubbles.tga.ckd`, `ui_fx_light_saber.tga.ckd`, `ui_fx_multi_sparks.tga.ckd`, `ui_com_fx_circles.tga.ckd`, `ui_fx_starfield.tga.ckd`, `ui_com_fx_simpleglow.tga.ckd`, `ui_com_fx_pointglow.tga.ckd`, `ui_com_fx_sparks_32.tga.ckd` y `x_flare.png`.
+  - **Curvas Bézier reales evaluadas directamente de `feedback_*.tape.ckd`**: inclinación exacta de `+10.0°` (`0.174533 rad`), slam-in elástico desde escala mayor (`1.43x–2.23x -> 1.0x`), despliegue vertical de columna superior (`ProportionClip`), colores exactos de `DGlow` (`ColorClip`) y `Bad`/`GoldMiss` sin columna vertical igual que en el juego original.
+  - **`SUPER` exclusivo en celeste claro (`#74EEFF`)**: creado con `Just Dance Bold.ttf` respetando exactamente el grosor, espaciado, estiramiento vertical y halo gaussiano de los textos originales de Ubisoft, con coreografía puente entre `Good` y `Perfect`.
+- **`JD4` rediseñado al 100% fiel a las capturas originales del HUD de Just Dance 4**:
+  - Línea divisoria vertical izquierda ultra nítida con **cortina unilateral** que se desvanece hacia la derecha, **medio-sol de 180°** verde-lima a la izquierda de `PERFECT`, burbujas bokeh UbiArt (`ui_com_fx_lens_bubbles`) en `GOOD`, variante celeste claro en `SUPER`, tipografía `Just Dance Font Regular` horizontal (`0°`) y cruz `X` sin cortina.
+- **`Custom_Scratch` y Presets de Estudio V4.1**:
+  - Nuevas formas y presets de 1 clic basados en eras clásicas (`🟢 Columna JD14`, `🫧 Bokeh GOOD`, `⚡ Láser JD14`, `☀️ Rayos YEAH`, `🟣 Cortina JD4`, `🌅 Medio-Sol JD4`) y paletas oficiales de JD 2014 / JD 4.
+- **Motor reproducible**: `tools/fxgen.py` decodifica `.tga.ckd`, evalúa `.tape.ckd` y compila los packs a 60 FPS; `tools/preview_lfx.py` renderiza tiras comparativas y hojas de contacto.
 
-![JD2014-2016](docs/sheet14a.png)
-![JD4](docs/sheet4a.png)
+![Tira Comparativa JD 2014-2016](docs/strip_jd2014_6panel.png)
+![Tira Comparativa JD 4](docs/strip_jd4_6panel.png)
+![JD2014-2016 Hoja de Contacto](docs/sheet14a.png)
+![JD4 Hoja de Contacto](docs/sheet4a.png)
 
 ---
 

@@ -663,12 +663,14 @@ function buildInspector(){
 
 /* ====================== paletas y diseñador rápido ====================== */
 const PALETTES = [
+  { name: '🟢 JD14 Perfect', f0: '#ffffff', f1: '#ffffff', stroke: '#56db0e', glow: '#7dff24', sw: 5, gb: 16 },
+  { name: '💎 Celeste Super', f0: '#ffffff', f1: '#ffffff', stroke: '#6ee6ff', glow: '#9ef2ff', sw: 5, gb: 16 },
+  { name: '🫧 JD14 Good', f0: '#ffffff', f1: '#ffffff', stroke: '#02add3', glow: '#28dcff', sw: 5, gb: 16 },
+  { name: '🔮 JD14/4 OK', f0: '#ffffff', f1: '#ffffff', stroke: '#df34f9', glow: '#e868ff', sw: 5, gb: 16 },
+  { name: '👑 Golden YEAH', f0: '#ffffff', f1: '#fff8dc', stroke: '#ffb800', glow: '#ffd644', sw: 6, gb: 20 },
   { name: '⚡ Cyber Neon', f0: '#00f0ff', f1: '#ff0077', stroke: '#02131a', glow: '#00f0ff', sw: 10, gb: 20 },
-  { name: '👑 Golden JD', f0: '#ffd700', f1: '#ffffff', stroke: '#2e1800', glow: '#ffaa00', sw: 11, gb: 24 },
-  { name: '🌿 Emerald Shine', f0: '#00ff88', f1: '#ffffff', stroke: '#022415', glow: '#00cc66', sw: 10, gb: 18 },
   { name: '🍬 Sweet Candy', f0: '#ff77aa', f1: '#77ddff', stroke: '#2e0825', glow: '#ff55aa', sw: 10, gb: 20 },
-  { name: '🔥 Inferno Flame', f0: '#ff6600', f1: '#ffcc00', stroke: '#330800', glow: '#ff3300', sw: 12, gb: 26 },
-  { name: '💜 Ultra Violet', f0: '#b300ff', f1: '#00ffff', stroke: '#15022e', glow: '#8800ff', sw: 10, gb: 22 }
+  { name: '🔥 Inferno Flame', f0: '#ff6600', f1: '#ffcc00', stroke: '#330800', glow: '#ff3300', sw: 12, gb: 26 }
 ];
 
 function findMainTextRegion(fb){
@@ -896,6 +898,9 @@ const SHAPES={
   'Burbuja':(x,s)=>{x.fillStyle='rgba(255,255,255,.28)';x.beginPath();x.arc(s/2,s/2,s*.46,0,7);x.fill();x.strokeStyle='rgba(255,255,255,.95)';x.lineWidth=s*.025;x.stroke();x.fillStyle='rgba(255,255,255,.35)';x.beginPath();x.ellipse(s*.36,s*.3,s*.14,s*.09,-.5,0,7);x.fill()},
   'Sunburst':(x,s)=>{x.translate(s/2,s/2);for(let i=0;i<16;i++){x.rotate(Math.PI/8);const g=x.createLinearGradient(0,0,s/2,0);g.addColorStop(0,'rgba(255,255,255,.95)');g.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=g;x.beginPath();x.moveTo(0,0);x.lineTo(s/2,-s*.045);x.lineTo(s/2,s*.045);x.fill()}},
   'Columna':(x,s)=>{const g=x.createLinearGradient(0,0,0,s);g.addColorStop(0,'rgba(255,255,255,0)');g.addColorStop(.2,'rgba(255,255,255,1)');g.addColorStop(.8,'rgba(255,255,255,1)');g.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=g;x.fillRect(0,0,s,s)},
+  'Columna JD14':(x,s)=>{const g=x.createLinearGradient(0,0,0,s);g.addColorStop(0,'rgba(255,255,255,.96)');g.addColorStop(.68,'rgba(255,255,255,.92)');g.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=g;x.fillRect(s*.02,0,s*.96,s);x.fillStyle='rgba(255,255,255,.25)';x.fillRect(s*.02,0,s*.03,s*.75);x.fillRect(s*.95,0,s*.03,s*.75)},
+  'Cortina JD4':(x,s)=>{const g=x.createLinearGradient(s*.03,0,s,0);g.addColorStop(0,'rgba(255,255,255,1)');g.addColorStop(.38,'rgba(255,255,255,.52)');g.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=g;x.fillRect(s*.03,s*.06,s*.97,s*.88);x.fillStyle='#fff';x.fillRect(s*.02,s*.08,s*.018,s*.84)},
+  'Medio-Sol JD4':(x,s)=>{const ox=s*.04,oy=s*.5;for(let i=0;i<15;i++){const a=-Math.PI*.47+(i+.5)/15*Math.PI*.94,w=.045;const g=x.createRadialGradient(ox,oy,0,ox,oy,s*.92);g.addColorStop(0,'rgba(255,255,255,.95)');g.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=g;x.beginPath();x.moveTo(ox,oy);x.lineTo(ox+Math.cos(a-w)*s,oy+Math.sin(a-w)*s);x.lineTo(ox+Math.cos(a+w)*s,oy+Math.sin(a+w)*s);x.fill()}},
   'Barra EQ':(x,s)=>{const g=x.createLinearGradient(0,0,s,0);g.addColorStop(0,'rgba(255,255,255,0)');g.addColorStop(.5,'rgba(255,255,255,1)');g.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=g;x.fillRect(s*.38,s*.05,s*.24,s*.9)}
 };
 function buildShapeBtns(){const b=$('#shapeBtns');for(const[n,f]of Object.entries(SHAPES)){const e=document.createElement('button');e.className='sm';e.textContent='+ '+n;e.onclick=()=>{const c=mk(128,128);f(c.getContext('2d'),128);addTexture(n,c);buildInspector()};b.append(e)}}
@@ -1318,17 +1323,18 @@ init();
   /* presets de partículas / fondos */
   function shapeTex(n){
     const ex=Object.values(App.texLib).find(t=>t.name===n);if(ex)return ex.id;
-    const sz=n==='Sunburst'?256:128,c=mk(sz,sz);SHAPES[n](c.getContext('2d'),sz);
+    const sz=(n==='Sunburst'||n==='Medio-Sol JD4'||n==='Cortina JD4')?256:128,c=mk(sz,sz);SHAPES[n](c.getContext('2d'),sz);
     return addTexture(n,c);
   }
   const PRE={
-    '✨ Chispas ↑':{k:'e',shape:'Destello',p:{name:'Chispas ascendentes',count:30,spawn:260,life:620,lifeJit:.5,spdA:70,spdB:190,angA:65,angB:115,radius:150,grav:60,drag:.6,szA:34,szB:0,sizeJit:.5,alpha:1,fadeIn:.15,fadeOut:.55,colA:'#ffffff',colB:'#bff7ff'}},
-    '💥 Ráfaga':{k:'e',shape:'Estrella',p:{name:'Ráfaga radial',count:26,spawn:50,life:480,spdA:220,spdB:460,angA:0,angB:360,radius:30,grav:0,drag:2,szA:42,szB:0,colA:'#fff6c0',colB:'#ffc21a'}},
-    '🫧 Burbujas':{k:'e',shape:'Burbuja',p:{name:'Burbujas bokeh',count:9,spawn:130,life:760,lifeJit:.4,spdA:25,spdB:70,angA:55,angB:125,radius:170,grav:0,drag:.4,szA:90,szB:170,sizeJit:.4,rotRand:0,rotA:0,rotB:0,alpha:.9,fadeIn:.2,fadeOut:.5,colA:'#cfefff',colB:'#ffffff'}},
-    '🎊 Confeti':{k:'e',shape:'Estrella',p:{name:'Confeti',count:44,spawn:160,life:900,spdA:180,spdB:420,angA:50,angB:130,radius:40,grav:-420,drag:.8,szA:28,szB:14,colA:'#ffd24a',colB:'#ff4aa0'}},
-    '🔆 Sunburst':{k:'b',shape:'Sunburst',p:{name:'Rayos giratorios',w:900,sy:1,s0:.3,spin:40,pulse:.02,tint:'#ffd24a',alpha:.75,behind:true,additive:true,exit:260,exitScale:1.6}},
-    '▮ Columna':{k:'b',shape:'Columna',p:{name:'Columna de color',w:260,sy:2.4,s0:.6,spin:0,pulse:.01,tint:'#17b6ff',alpha:.8,behind:true,additive:false,ease:'outCubic'}},
-    '▥ Ecualizador':{k:'b',shape:'Barra EQ',p:{name:'Barra EQ',w:130,sy:3,s0:.2,spin:0,pulse:.18,pulseHz:5,tint:'#7dff5a',alpha:.9,behind:true,additive:true}}
+    '🟢 Columna JD14':{k:'b',shape:'Columna JD14',p:{name:'Columna UbiArt JD14',w:350,sy:1.4,oy:150,s0:.4,spin:0,pulse:.01,tint:'#44ca08',alpha:.78,behind:true,additive:false,ease:'outCubic'}},
+    '🫧 Bokeh GOOD':{k:'e',shape:'Burbuja',p:{name:'Burbujas Bokeh UbiArt',count:8,spawn:110,life:720,lifeJit:.35,spdA:20,spdB:55,angA:55,angB:125,radius:145,grav:0,drag:.4,szA:105,szB:185,sizeJit:.4,rotRand:0,rotA:0,rotB:0,alpha:.62,fadeIn:.18,fadeOut:.5,colA:'#24dcff',colB:'#66eeff',behind:true}},
+    '⚡ Láser JD14':{k:'b',shape:'Barra EQ',p:{name:'Haces Láser PERFECT',w:180,sy:2.6,oy:145,s0:.3,spin:0,pulse:.14,pulseHz:5,tint:'#a8ff38',alpha:.65,behind:true,additive:true}},
+    '☀️ Rayos YEAH':{k:'b',shape:'Sunburst',p:{name:'Rayos Dorados YEAH',w:660,sy:1,oy:18,s0:.45,spin:16,pulse:.02,tint:'#ffd648',alpha:.82,behind:true,additive:true,exit:260,exitScale:1.35}},
+    '🟣 Cortina JD4':{k:'b',shape:'Cortina JD4',p:{name:'Cortina Unilateral JD4',w:420,sy:.9,ox:35,oy:24,s0:.35,spin:0,pulse:.01,tint:'#9a12f0',alpha:.85,behind:true,additive:false,ease:'outCubic'}},
+    '🌅 Medio-Sol JD4':{k:'b',shape:'Medio-Sol JD4',p:{name:'Medio-Sol JD4 Perfect',w:410,sy:1.05,ox:-15,oy:14,s0:.4,spin:0,pulse:.02,tint:'#adfa24',alpha:.82,behind:true,additive:true,ease:'outBack'}},
+    '✨ Chispas ↑':{k:'e',shape:'Destello',p:{name:'Chispas ascendentes',count:30,spawn:260,life:620,lifeJit:.5,spdA:70,spdB:190,angA:65,angB:115,radius:150,grav:60,drag:.6,szA:22,szB:0,sizeJit:.5,alpha:1,fadeIn:.15,fadeOut:.55,colA:'#ffffff',colB:'#c8ff68'}},
+    '💥 Ráfaga':{k:'e',shape:'Estrella',p:{name:'Ráfaga radial',count:26,spawn:50,life:480,spdA:220,spdB:460,angA:0,angB:360,radius:30,grav:0,drag:2,szA:36,szB:0,colA:'#fff6c0',colB:'#ffc21a'}}
   };
   const pb=$('#presetBtns');
   Object.entries(PRE).forEach(([n,d])=>{const b=document.createElement('button');b.className='sm';b.textContent=n;b.title='Añade esta capa lista para usar a la animación actual';

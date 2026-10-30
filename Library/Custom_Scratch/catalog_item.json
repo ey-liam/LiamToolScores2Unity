@@ -1,0 +1,20 @@
+{
+  "itemId": "0a58004b-231e-4a56-8711-d5ec1659c81b",
+  "type": "scoringFx",
+  "maximumQuantity": 1,
+  "nameId": "Custom_Scratch",
+  "tags": [],
+  "assets": {},
+  "localizations": {},
+  "obj": {
+    "nameLocId": 905739595,
+    "rarity": 0,
+    "assetAddress": "Assets/Data/Spine/ScoringFXs/Custom_Scratch/ScoringFX_Custom_Scratch_SkeletonData.asset",
+    "thumbnailAddress": "Assets/Data/Textures/Thumbnails/ScoringFXs/ScoringFX_Thumbnail_Custom_Scratch.psd",
+    "isPremium": false,
+    "isUbiconnect": false,
+    "hiddenUntilUnlocked": false,
+    "isSeasonal": false,
+    "unlockConditionsLocId": 0
+  }
+}

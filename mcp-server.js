@@ -183,13 +183,18 @@ const MCP_TOOLS = [
     },
     {
         name: 'scores_export_unity_bundle',
-        description: 'Genera y guarda en disco o devuelve el paquete completo para Unity (.lfx.json, atlas PNGs, C# Player y Shaders).',
+        description: 'Compila y guarda en disco el paquete oficial Spine 4.0.64 para Just Dance Next (ScoringFX_<Nombre>.{skel,atlas,png}, miniatura 256x256, catalog_item.json y SHA256SUMS.txt) y opcionalmente el paquete standalone LiamFX.',
         inputSchema: {
             type: 'object',
             properties: {
                 outputDir: {
                     type: 'string',
-                    description: 'Ruta absoluta en disco donde guardar la carpeta exportada (ej: C:/MiProyectoUnity/Assets/ScoringFX).'
+                    description: 'Ruta absoluta en disco donde guardar la carpeta ScoringFX_<Nombre>/ (ej: C:/Entregas_JDNext).'
+                },
+                includeLiamFX: {
+                    type: 'boolean',
+                    default: false,
+                    description: 'Si es true, guarda además una subcarpeta LiamFX_Standalone/ para proyectos Unity independientes.'
                 }
             }
         }
@@ -292,33 +297,38 @@ async function handleMcpToolCall(name, args) {
                 };
             }
 
-            // Si se indicó un directorio en disco, guardar los archivos allí directamente
+            // Si se indicó un directorio en disco, guardar el paquete Spine 4.0.64 JDNext (y opcionalmente LiamFX)
             if (args.outputDir && res.bundle) {
                 try {
                     fs.mkdirSync(args.outputDir, { recursive: true });
-                    const targetName = res.bundle.name || 'ScoringFX_Custom';
-                    const targetDir = path.join(args.outputDir, targetName);
+                    const folderName = res.bundle.fullName || res.bundle.name || 'ScoringFX_Custom';
+                    const targetDir = path.join(args.outputDir, folderName);
                     fs.mkdirSync(targetDir, { recursive: true });
 
-                    // Guardar .lfx.json
-                    fs.writeFileSync(path.join(targetDir, `${targetName}.lfx.json`), JSON.stringify(res.bundle.lfx, null, 2), 'utf8');
-
-                    // Guardar PNGs de atlas
-                    if (res.bundle.pages) {
-                        for (const page of res.bundle.pages) {
-                            const b64 = page.dataUrl.replace(/^data:image\/png;base64,/, '');
-                            fs.writeFileSync(path.join(targetDir, page.file), Buffer.from(b64, 'base64'));
+                    if (Array.isArray(res.bundle.spineFiles) && res.bundle.spineFiles.length > 0) {
+                        for (const sf of res.bundle.spineFiles) {
+                            fs.writeFileSync(path.join(targetDir, sf.fileName), Buffer.from(sf.base64, 'base64'));
                         }
                     }
 
-                    // Copiar scripts C# y shaders de la carpeta Unity/
-                    const unitySrc = path.join(ROOT_DIR, 'Unity');
-                    if (fs.existsSync(unitySrc)) {
-                        copyRecursiveSync(unitySrc, path.join(targetDir, 'LiamFX_Runtime'));
+                    if (args.includeLiamFX) {
+                        const lfxDir = path.join(targetDir, 'LiamFX_Standalone');
+                        fs.mkdirSync(lfxDir, { recursive: true });
+                        fs.writeFileSync(path.join(lfxDir, `${folderName}.lfx.json`), JSON.stringify(res.bundle.lfx, null, 2), 'utf8');
+                        if (res.bundle.pages) {
+                            for (const page of res.bundle.pages) {
+                                const b64 = page.dataUrl.replace(/^data:image\/png;base64,/, '');
+                                fs.writeFileSync(path.join(lfxDir, page.file), Buffer.from(b64, 'base64'));
+                            }
+                        }
+                        const unitySrc = path.join(ROOT_DIR, 'Unity');
+                        if (fs.existsSync(unitySrc)) {
+                            copyRecursiveSync(unitySrc, path.join(lfxDir, 'LiamFX_Runtime'));
+                        }
                     }
 
                     return {
-                        content: [{ type: 'text', text: `¡Paquete de Unity exportado exitosamente a:\n${targetDir}` }]
+                        content: [{ type: 'text', text: `¡Paquete Spine 4.0.64 para Just Dance Next exportado exitosamente a:\n${targetDir}` }]
                     };
                 } catch (saveErr) {
                     return {

@@ -1,9 +1,24 @@
-# LiamToolScores2Unity V4.1
+# LiamToolScores2Unity V4.2
 
-Herramienta web profesional para crear, personalizar, previsualizar y exportar efectos de puntuación (**ScoringFX**) de Just Dance directamente a Unity y al juego. Incluye integración en tiempo real con servidor **MCP (Model Context Protocol)** para automatización e inspección con Inteligencia Artificial.
+Herramienta web profesional para crear, personalizar, previsualizar y exportar efectos de puntuación (**ScoringFX**) de Just Dance directamente a **Just Dance Next (Spine 4.0.64 binario en UI Toolkit)** y proyectos Unity. Incluye integración en tiempo real con servidor **MCP (Model Context Protocol)** para automatización e inspección con Inteligencia Artificial.
 
 - **GitHub Pages**: https://ey-liam.github.io/LiamToolScores2Unity/
 - **Repositorio**: https://github.com/ey-liam/LiamToolScores2Unity
+
+---
+
+## Novedades en V4.2 (Compilador Nativo Spine 4.0.64 Binario + Calibración UI Toolkit JDNext)
+
+- **Compilador Nativo de Binarios Spine `4.0.64` (`.skel`) en Python (`tools/spine_writer.py`) y en el Estudio Web (`index.html`)**:
+  - Genera esqueletos binarios Spine `4.0.64` 100% reales y compatibles bit a bit con `spine-csharp` 4.0 (`SkeletonBinary`) de **Just Dance Next** — sin copiar `.skel` ajenos ni dejar regiones huérfanas.
+  - Compila las **7 animaciones obligatorias** (`Bad`, `Ok`, `Good`, `Super`, `Perfect`, `Gold`, `GoldMiss`), skin `default`, **Setup Pose 100% limpia** (`attachment = null` en todos los slots para que `SetToSetupPose()` + `ClearTracks()` jamás filtre restos visuales), y ancla `PERFECT` visible en `t = 0.32 s` para el auto-escalado a `225 px` del juego.
+  - Soporta descomposición exacta de quads a transformaciones de hueso (`translate`, `rotate`, `scale`) con simplificación Ramer-Douglas-Peucker (~38–78 KB por `.skel`) y `DeformTimeline` para mallas deformadas multi-vértice, incluyendo **partículas y fondos personalizados** añadidos desde el estudio web.
+- **Calibración Estricta de Mezcla Alfa Normal (`JDSpineMesh` / Unity UI Toolkit)**:
+  - Just Dance Next dibuja los ScoringFX en UI Toolkit con **mezcla alfa normal** (ignorando `BlendMode.Additive`). Todas las capas, columnas, cortinas, medios-soles, láseres, burbujas bokeh y chispas están ordenadas estrictamente de atrás hacia adelante con canal alfa real y colores luminosos.
+  - Nuevo interruptor **`Modo JDNext (Alfa Normal)`** activo por defecto en el visor WebGL del estudio para previsualizar exactamente lo que dibuja el motor del juego.
+- **Formato Oficial de Entrega para Motor (`catalog_item.json` + `SHA256SUMS.txt` + `preflight_scoringfx.py`)**:
+  - Exporta la carpeta `ScoringFX_<Nombre>/` con nombre limpio (sin espacios, sin duplicar `ScoringFX_` ni `_SkeletonData`), `ScoringFX_<Nombre>.{skel,atlas,png}` (RGBA 8 bits, 100% de regiones del atlas referenciadas), `ScoringFX_Thumbnail_<Nombre>.png` (`256×256`), `catalog_item.json` (`"itemId"` estrictamente como primera clave) y `SHA256SUMS.txt`.
+  - Incluye validador oficial `tools/preflight_scoringfx.py` verificado contra el runtime oficial `spine-csharp` 4.0.
 
 ---
 
@@ -84,18 +99,18 @@ Cada ScoringFX cuenta con los 6 elementos de juicio oficiales más las variantes
 
 ---
 
-## Estructura de Archivos Exportados
+## Estructura de Archivos Exportados (Spine 4.0.64 / Just Dance Next)
 
-Al exportar un proyecto desde la herramienta web se generan los siguientes archivos:
+Al exportar un paquete Spine 4.0.64 para Just Dance Next desde el estudio web o `tools/fxgen.py`, se genera la carpeta oficial lista para integrar:
 
 ```text
 ScoringFX_<Nombre>/
-├── ScoringFX_<Nombre>.lfx.json      # Definición de mallas, UVs y animación a 60 FPS
-├── ScoringFX_<Nombre>.png           # Textura atlas de alta resolución
-├── ScoringFX_<Nombre>.skel          # Archivo binario Spine 4.0 (para el juego)
-├── ScoringFX_<Nombre>.atlas         # Descriptor de atlas Spine
-├── ScoringFX_Thumbnail_<Nombre>.png # Miniatura para el catálogo del juego
-└── scoring_fx_definitions.json      # Entrada para el catálogo de StreamingAssets
+├── ScoringFX_<Nombre>.skel          # Binario Spine 4.0.64 real (7 animaciones, setup pose limpia, ancla PERFECT)
+├── ScoringFX_<Nombre>.atlas         # 1.ª línea = ScoringFX_<Nombre>.png, 100% regiones usadas
+├── ScoringFX_<Nombre>.png           # Textura atlas PNG RGBA de 8 bits (1024×1024)
+├── ScoringFX_Thumbnail_<Nombre>.png # Miniatura 256×256 PNG RGBA de 8 bits
+├── catalog_item.json                # Entrada de catálogo ("itemId" como primera clave única)
+└── SHA256SUMS.txt                   # Hashes SHA-256 de verificación de integridad
 ```
 
 ---

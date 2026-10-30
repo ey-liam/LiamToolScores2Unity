@@ -1,0 +1,20 @@
+{
+  "itemId": "663486a1-9b64-4581-ac7e-83c19510438c",
+  "type": "scoringFx",
+  "maximumQuantity": 1,
+  "nameId": "JD2014_2016",
+  "tags": [],
+  "assets": {},
+  "localizations": {},
+  "obj": {
+    "nameLocId": 905220274,
+    "rarity": 0,
+    "assetAddress": "Assets/Data/Spine/ScoringFXs/JD2014_2016/ScoringFX_JD2014_2016_SkeletonData.asset",
+    "thumbnailAddress": "Assets/Data/Textures/Thumbnails/ScoringFXs/ScoringFX_Thumbnail_JD2014_2016.psd",
+    "isPremium": false,
+    "isUbiconnect": false,
+    "hiddenUntilUnlocked": false,
+    "isSeasonal": false,
+    "unlockConditionsLocId": 0
+  }
+}

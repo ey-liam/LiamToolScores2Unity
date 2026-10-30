@@ -1,0 +1,20 @@
+{
+  "itemId": "2ffc6da8-bf00-4786-ace9-447edd129089",
+  "type": "scoringFx",
+  "maximumQuantity": 1,
+  "nameId": "JD4",
+  "tags": [],
+  "assets": {},
+  "localizations": {},
+  "obj": {
+    "nameLocId": 905473190,
+    "rarity": 0,
+    "assetAddress": "Assets/Data/Spine/ScoringFXs/JD4/ScoringFX_JD4_SkeletonData.asset",
+    "thumbnailAddress": "Assets/Data/Textures/Thumbnails/ScoringFXs/ScoringFX_Thumbnail_JD4.psd",
+    "isPremium": false,
+    "isUbiconnect": false,
+    "hiddenUntilUnlocked": false,
+    "isSeasonal": false,
+    "unlockConditionsLocId": 0
+  }
+}

@@ -448,11 +448,14 @@ class Anim:
         self.dur = dur
         self.layers = []
 
-    def layer(self, region, t0=0.0, t1=None, blend="normal", x=0.0, y=0.0, sc=1.0, sx=1.0, sy=1.0, rot=0.0, a=1.0, col="#ffffff", size=None, anchor_y=0.0):
-        """anchor_y: 0.0 = centro, +0.5 = anclado arriba (crece hacia abajo), -0.5 = anclado abajo."""
+    def layer(self, region, t0=0.0, t1=None, blend="normal", x=0.0, y=0.0, sc=1.0, sx=1.0, sy=1.0, rot=0.0, a=1.0, col="#ffffff", size=None, anchor_y=0.0, att_name=None):
+        """anchor_y: 0.0 = centro, +0.5 = anclado arriba (crece hacia abajo), -0.5 = anclado abajo.
+        Nota JDNext UI Toolkit: JDSpineMesh dibuja siempre con mezcla normal con alpha; las capas se ordenan
+        de atras hacia adelante con blend='normal' y alpha real para fidelidad 1:1 en UI Toolkit y Web Studio."""
         self.layers.append(dict(
-            region=region, t0=t0, t1=self.dur if t1 is None else t1, blend=blend,
-            x=x, y=y, sc=sc, sx=sx, sy=sy, rot=rot, a=a, col=col, size=size, anchor_y=anchor_y
+            region=region, t0=t0, t1=self.dur if t1 is None else t1, blend="normal",
+            x=x, y=y, sc=sc, sx=sx, sy=sy, rot=rot, a=a, col=col, size=size, anchor_y=anchor_y,
+            att_name=att_name or region
         ))
 
 def build_lfx(name, atlas, anims):
@@ -463,15 +466,15 @@ def build_lfx(name, atlas, anims):
         for L in A.layers:
             si = len(slots)
             r = regs[L["region"]]
+            att_nm = L.get("att_name") or L["region"]
             slots.append(dict(name=f"{an}_{L['region']}_{si}", blend=L["blend"], bone="root"))
-            # Inset 0.5px UV para evitar bleeding de bordes
             u0 = (r["x"] + 0.5) / atlas.size
             u1 = (r["x"] + r["w"] - 0.5) / atlas.size
             v0 = (r["y"] + 0.5) / atlas.size
             v1 = (r["y"] + r["h"] - 0.5) / atlas.size
             ai = len(atts)
             atts.append(dict(
-                slot=si, name=L["region"], region=L["region"], page=0, nv=4,
+                slot=si, name=att_nm, region=L["region"], page=0, nv=4,
                 uvs=[round(u1, 5), round(v1, 5), round(u0, 5), round(v1, 5), round(u0, 5), round(v0, 5), round(u1, 5), round(v0, 5)],
                 tris=[1, 2, 3, 1, 3, 0]
             ))
@@ -497,7 +500,6 @@ def build_lfx(name, atlas, anims):
                 rot = math.radians(samp(L["rot"], t))
                 cx, cy = samp(L["x"], t), samp(L["y"], t)
                 co, si_ = math.cos(rot), math.sin(rot)
-                # Con anchor_y=+0.5 el borde superior queda fijo en cy y crece hacia abajo
                 y_top = (0.5 - ay) * h
                 y_bot = (-0.5 - ay) * h
                 vs = []
@@ -510,14 +512,15 @@ def build_lfx(name, atlas, anims):
         out[an] = dict(duration=A.dur, tracks=tracks)
     return dict(
         format="LiamFX", version=1, name=name, source=f"ScoringFX_{name}.skel",
-        spine="custom", fps=60.0, editorFps=30.0,
+        spine="4.0.64", fps=60.0, editorFps=60.0,
         pages=[dict(file=f"ScoringFX_{name}.png", w=atlas.size, h=atlas.size)],
         regions=regs, slots=slots, attachments=atts, animations=out
     )
 
-# ======================= Coreografia 1: JUST DANCE 2014 - 2016 (1:1 UbiArt Tapes) =======================
+# ======================= Coreografia 1: JUST DANCE 2014 - 2016 (1:1 UbiArt Tapes, Normal-Alpha UI Toolkit) =======================
 def build_jd2014_anims():
-    """Coreografia extraida directamente de animations/feedbacks/feedback_*.tape.ckd."""
+    """Coreografia extraida directamente de animations/feedbacks/feedback_*.tape.ckd,
+    ordenada estrictamente de atras hacia adelante para mezcla normal con alpha (UI Toolkit JDSpineMesh)."""
     tapes = {
         k: load_tape_json(f"feedback_{k}.tape.ckd")
         for k in ("perfect", "good", "ok", "gold", "bad", "gold_bad")
@@ -532,7 +535,6 @@ def build_jd2014_anims():
                         return c
         return None
 
-    # Extraer curvas Bezier reales de cada .tape.ckd
     def tape_text_fns(tape_key, txt_sub, base_ubi_w, base_ubi_h, total_ticks, dur_s, y_drift_px=28.0):
         tp = tapes[tape_key]
         sz_clip = find_clip(tp, "SizeClip", txt_sub) or find_clip(tp, "ScaleClip", txt_sub)
@@ -578,92 +580,89 @@ def build_jd2014_anims():
 
         return sy_fn, al_fn
 
-    def tape_dglow_fn(tape_key, dg_sub, total_ticks, dur_s, gain=1.15):
+    def tape_dglow_fn(tape_key, dg_sub, total_ticks, dur_s, gain=1.0):
         tp = tapes[tape_key]
         al_clip = find_clip(tp, "AlphaClip", dg_sub)
         ka = al_clip["Curve"]["Curve"]["Keys"]
         return lambda t: max(0.0, min(1.0, eval_ubi_bezier(ka, (t / dur_s) * total_ticks) * gain))
 
-    TILT_DEG = 10.0  # Exacto: 0.174533 rad = 10.000 grados en todos los .tape.ckd!
-    TOP_Y = 395.0    # Tope superior de la columna (se despliega de arriba hacia abajo hasta y=-95 debajo del texto)
+    TILT_DEG = 10.0  # Exacto: 0.174533 rad = 10.000 grados en todos los .tape.ckd
+    TOP_Y = 395.0
     COL_H = 490.0
     anims = {}
     rng = random.Random(2014)
 
     def add_jd14_text(A, reg, dur, sx_fn, sy_fn, al_fn, dy_fn, size_wh, flash_col):
-        # Pulso aditivo de impacto en los primeros 0.18s + texto nitido original a 10.0 grados
-        A.layer(reg, 0.0, dur, "additive", x=0.0, y=dy_fn, sx=lambda t: sx_fn(t)*1.04, sy=lambda t: sy_fn(t)*1.04,
-                rot=TILT_DEG, a=lambda t: al_fn(t) * max(0.0, 0.42 * (1.0 - t / 0.22)), col=flash_col, size=size_wh)
+        # Halo de impacto detras (att_name distinto para que 'PERFECT' sea unicamente la palabra ancla nitida!)
+        A.layer(reg, 0.0, 0.22, "normal", x=0.0, y=dy_fn, sx=lambda t: sx_fn(t)*1.045, sy=lambda t: sy_fn(t)*1.045,
+                rot=TILT_DEG, a=lambda t: al_fn(t) * max(0.0, 0.48 * (1.0 - t / 0.22)), col=flash_col, size=size_wh,
+                att_name=f"{reg}_glow")
         A.layer(reg, 0.0, dur, "normal", x=0.0, y=dy_fn, sx=sx_fn, sy=sy_fn,
-                rot=TILT_DEG, a=al_fn, col="#ffffff", size=size_wh)
+                rot=TILT_DEG, a=al_fn, col="#ffffff", size=size_wh, att_name=reg)
 
     # -------------------- 1. PERFECT (72 ticks -> 0.88s) --------------------
     d = 0.88
     A = Anim(d)
-    col_sy, col_al = tape_col_fns("perfect", "GodRays", 220.0, 72.0, d, peak_gain=1.22)
-    dg_al = tape_dglow_fn("perfect", "DGlow", 72.0, d, gain=0.95)
-    # Columna verde grad_v_coach + franjas verticales reales ui_com_barcode + haces ui_fx_light_saber equilibrados
+    col_sy, col_al = tape_col_fns("perfect", "GodRays", 220.0, 72.0, d, peak_gain=1.24)
+    dg_al = tape_dglow_fn("perfect", "DGlow", 72.0, d, gain=0.72)
+    # 1) DGlow ambiental al fondo, 2) Columna verde grad_v_coach, 3) Franjas laser luminosas arriba de la columna
+    A.layer("dglow", 0.0, d, "normal", x=0.0, y=55.0, size=(540, 480), a=dg_al, col="#56C407")
     A.layer("col_coach", 0.0, d, "normal", x=0.0, y=TOP_Y, size=(375, COL_H), sy=col_sy, a=col_al, col="#44CA08", anchor_y=0.5)
-    A.layer("col_barcode", 0.0, d, "additive", x=0.0, y=TOP_Y, size=(370, COL_H), sy=col_sy, a=lambda t: col_al(t)*0.52, col="#9CFF2E", anchor_y=0.5)
-    # 5 haces verticales ui_fx_light_saber sutiles para dar textura laser sin quemar el contraste del texto
-    for bx, bw, ph, amp in [(-144, 38, 0.0, 0.36), (-68, 46, 0.02, 0.42), (4, 32, 0.04, 0.30), (76, 48, 0.015, 0.42), (146, 34, 0.03, 0.35)]:
-        A.layer("light_saber", 0.01, d - 0.06, "additive", x=bx, y=TOP_Y - 12, size=(bw, COL_H * 0.94),
+    A.layer("col_barcode", 0.0, d, "normal", x=0.0, y=TOP_Y, size=(370, COL_H), sy=col_sy, a=lambda t: col_al(t)*0.68, col="#C6FF62", anchor_y=0.5)
+    for bx, bw, ph, amp in [(-144, 38, 0.0, 0.42), (-68, 46, 0.02, 0.48), (4, 32, 0.04, 0.36), (76, 48, 0.015, 0.48), (146, 34, 0.03, 0.40)]:
+        A.layer("light_saber", 0.01, d - 0.06, "normal", x=bx, y=TOP_Y - 12, size=(bw, COL_H * 0.94),
                 sy=lambda t, p=ph: col_sy(max(0.0, t - p)) * (0.90 + 0.10 * math.sin(t * 24.0 + p * 80.0)),
-                a=lambda t, am=amp: col_al(t) * am, col="#B8FF4C", anchor_y=0.5)
-    # DGlow real (ColorClip: 0.337, 0.769, 0.027 -> #56C407)
-    A.layer("dglow", 0.0, d, "additive", x=0.0, y=55.0, size=(560, 500), a=dg_al, col="#56C407")
-    # Starfield real (ui_fx_starfield) + micro-chispas finas ascendentes incluso fuera de los bordes de la columna (CRAZY PERFECT!)
-    A.layer("starfield", 0.02, d - 0.05, "additive", x=-14.0, y=[(0.02, 75.0), (d, 145.0)], size=(430, 390),
-            sc=[(0.02, 0.94), (d, 1.08)], a=[(0.02, 0.0), (0.09, 0.92), (0.52, 0.72), (d - 0.05, 0.0)], col="#E2FF9E")
-    A.layer("starfield", 0.04, d - 0.08, "additive", x=18.0, y=[(0.04, 15.0), (d, 105.0)], size=(410, 360),
-            rot=90.0, a=[(0.04, 0.0), (0.12, 0.78), (0.50, 0.58), (d - 0.08, 0.0)], col="#FFFFFF")
-    for i in range(34):
+                a=lambda t, am=amp: col_al(t) * am, col="#DCFF88", anchor_y=0.5)
+    A.layer("starfield", 0.02, d - 0.05, "normal", x=-14.0, y=[(0.02, 75.0), (d, 145.0)], size=(430, 390),
+            sc=[(0.02, 0.94), (d, 1.08)], a=[(0.02, 0.0), (0.09, 0.95), (0.52, 0.78), (d - 0.05, 0.0)], col="#EEFFB8")
+    A.layer("starfield", 0.04, d - 0.08, "normal", x=18.0, y=[(0.04, 15.0), (d, 105.0)], size=(410, 360),
+            rot=90.0, a=[(0.04, 0.0), (0.12, 0.85), (0.50, 0.65), (d - 0.08, 0.0)], col="#FFFFFF")
+    for i in range(32):
         s = 0.01 + rng.uniform(0.0, 0.22)
-        l = rng.uniform(0.36, 0.62)
-        px = rng.uniform(-225, 225)
-        py0 = rng.uniform(-70, 215)
-        py1 = py0 + rng.uniform(50, 150)
+        l = rng.uniform(0.36, 0.60)
+        px = rng.uniform(-220, 220)
+        py0 = rng.uniform(-70, 210)
+        py1 = py0 + rng.uniform(50, 145)
         sz = rng.uniform(6, 15) if i % 5 != 0 else rng.uniform(14, 22)
         reg_sp = "spark_pin" if i % 4 == 0 else ("point_glow" if i % 3 == 0 else "sparks_32")
-        A.layer(reg_sp, s, min(d, s + l), "additive",
+        A.layer(reg_sp, s, min(d - 0.02, s + l), "normal",
                 x=[(s, px), (s + l, px + rng.uniform(-18, 18))],
                 y=[(s, py0, "outQuad"), (s + l, py1)],
                 size=(sz, sz), sc=[(s, 0.45, "outBack"), (s + l * 0.25, 1.0), (s + l, 0.15)],
                 rot=rng.uniform(0, 90),
-                a=[(s, 0.0), (s + 0.05, rng.uniform(0.75, 1.0)), (s + l, 0.0)],
-                col="#FFFFFF" if i % 2 == 0 else "#C4FF5C")
+                a=[(s, 0.0), (s + 0.05, rng.uniform(0.80, 1.0)), (s + l, 0.0)],
+                col="#FFFFFF" if i % 2 == 0 else "#D6FF7C")
     sx, sy, al, dy = tape_text_fns("perfect", "Perfect_Text", 108.0, 27.0, 72.0, d, y_drift_px=26.0)
-    add_jd14_text(A, "PERFECT", d, sx, sy, al, dy, (418, 128), "#B8FF54")
+    add_jd14_text(A, "PERFECT", d, sx, sy, al, dy, (418, 128), "#C8FF6E")
     anims["Perfect"] = A
 
     # -------------------- 2. SUPER (Puente celeste claro entre GOOD y PERFECT, 0.86s) --------------------
     d = 0.86
     A = Anim(d)
-    col_sy_s, col_al_s = tape_col_fns("perfect", "GodRays", 220.0, 72.0, d, peak_gain=1.16)
+    col_sy_s, col_al_s = tape_col_fns("perfect", "GodRays", 220.0, 72.0, d, peak_gain=1.18)
+    A.layer("dglow", 0.0, d, "normal", x=0.0, y=55.0, size=(500, 450),
+            a=tape_dglow_fn("perfect", "DGlow", 72.0, d, gain=0.68), col="#58DCFF")
     A.layer("col_coach", 0.0, d, "normal", x=0.0, y=TOP_Y, size=(350, COL_H - 10), sy=col_sy_s, a=col_al_s, col="#52D4FC", anchor_y=0.5)
-    A.layer("col_barcode", 0.0, d, "additive", x=0.0, y=TOP_Y, size=(346, COL_H - 10), sy=col_sy_s, a=lambda t: col_al_s(t)*0.24, col="#C4F6FF", anchor_y=0.5)
-    for bx, bw, amp in [(-115, 42, 0.26), (-32, 48, 0.30), (54, 44, 0.28), (124, 36, 0.24)]:
-        A.layer("light_saber", 0.02, d - 0.08, "additive", x=bx, y=TOP_Y - 15, size=(bw, (COL_H - 20) * 0.9),
-                sy=col_sy_s, a=lambda t, am=amp: col_al_s(t) * am, col="#CCF8FF", anchor_y=0.5)
-    A.layer("dglow", 0.0, d, "additive", x=0.0, y=55.0, size=(520, 470),
-            a=tape_dglow_fn("perfect", "DGlow", 72.0, d, gain=0.85), col="#6EE6FF")
-    # Onda difusa spark_wave + 5 burbujas celestes suaves (puente natural con GOOD sin linea dura sobre el texto)
-    A.layer("spark_wave", 0.01, 0.46, "additive", x=0.0, y=20.0, size=(170, 170),
-            sc=[(0.01, 0.7, "outCubic"), (0.46, 2.3)], a=[(0.01, 0.42), (0.46, 0.0)], col="#C4F6FF")
+    A.layer("col_barcode", 0.0, d, "normal", x=0.0, y=TOP_Y, size=(346, COL_H - 10), sy=col_sy_s, a=lambda t: col_al_s(t)*0.34, col="#DCFAFF", anchor_y=0.5)
+    for bx, bw, amp in [(-115, 42, 0.30), (-32, 48, 0.34), (54, 44, 0.32), (124, 36, 0.28)]:
+        A.layer("light_saber", 0.02, d - 0.08, "normal", x=bx, y=TOP_Y - 15, size=(bw, (COL_H - 20) * 0.9),
+                sy=col_sy_s, a=lambda t, am=amp: col_al_s(t) * am, col="#E6FCFF", anchor_y=0.5)
+    A.layer("spark_wave", 0.01, 0.46, "normal", x=0.0, y=20.0, size=(170, 170),
+            sc=[(0.01, 0.7, "outCubic"), (0.46, 2.3)], a=[(0.01, 0.46), (0.46, 0.0)], col="#DCFAFF")
     super_bubbles = [
-        ("bubble_ring", -112, 122, 172, 0.01, 0.64, 0.46),
-        ("spark_orb",    122,  98, 142, 0.03, 0.62, 0.50),
-        ("bubble_fill",  -20,  42, 185, 0.00, 0.60, 0.26),
-        ("spark_orb",     64, 178, 112, 0.05, 0.58, 0.44),
-        ("bubble_ring", -138,  20, 108, 0.04, 0.55, 0.38),
+        ("bubble_ring", -112, 122, 172, 0.01, 0.64, 0.54),
+        ("spark_orb",    122,  98, 142, 0.03, 0.62, 0.58),
+        ("bubble_fill",  -20,  42, 185, 0.00, 0.60, 0.30),
+        ("spark_orb",     64, 178, 112, 0.05, 0.58, 0.50),
+        ("bubble_ring", -138,  20, 108, 0.04, 0.55, 0.44),
     ]
     for reg_b, bx, by, bsz, t0_, life_, am in super_bubbles:
-        A.layer(reg_b, t0_, min(d, t0_ + life_), "additive",
+        A.layer(reg_b, t0_, min(d - 0.02, t0_ + life_), "normal",
                 x=[(t0_, bx * 0.82, "outQuad"), (t0_ + life_, bx * 1.08)],
                 y=[(t0_, by - 16, "outQuad"), (t0_ + life_, by + 32)],
                 size=(bsz, bsz), sc=[(t0_, 0.55, "outBack"), (t0_ + 0.14, 1.0), (t0_ + life_, 1.12)],
                 a=[(t0_, 0.0), (t0_ + 0.08, am), (t0_ + life_ * 0.65, am * 0.75), (t0_ + life_, 0.0)],
-                col="#B8F4FF")
+                col="#D4F9FF")
     for i in range(20):
         s = 0.01 + rng.uniform(0.0, 0.20)
         l = rng.uniform(0.34, 0.56)
@@ -671,39 +670,37 @@ def build_jd2014_anims():
         py0 = rng.uniform(-60, 195)
         sz = rng.uniform(13, 26) if i % 4 == 0 else rng.uniform(7, 15)
         reg_sp = "spark_cross" if i % 4 == 0 else ("point_glow" if i % 3 == 0 else "sparks_32")
-        A.layer(reg_sp, s, min(d, s + l), "additive",
+        A.layer(reg_sp, s, min(d - 0.02, s + l), "normal",
                 x=[(s, px), (s + l, px + rng.uniform(-18, 18))],
                 y=[(s, py0, "outQuad"), (s + l, py0 + rng.uniform(45, 135))],
                 size=(sz, sz), sc=[(s, 0.35, "outBack"), (s + l * 0.28, 1.0), (s + l, 0.1)],
                 rot=rng.uniform(0, 90),
-                a=[(s, 0.0), (s + 0.06, 0.88), (s + l, 0.0)],
-                col="#FFFFFF" if i % 2 == 0 else "#AEF4FF")
+                a=[(s, 0.0), (s + 0.06, 0.92), (s + l, 0.0)],
+                col="#FFFFFF" if i % 2 == 0 else "#C8F8FF")
     sx_p, sy_p, al_p, dy_p = tape_text_fns("perfect", "Perfect_Text", 108.0, 27.0, 72.0, d, y_drift_px=25.0)
     sx_g, sy_g, _, _       = tape_text_fns("good", "Good_Text", 56.0, 28.0, 72.0, d, y_drift_px=25.0)
-    add_jd14_text(A, "SUPER", d, lambda t: 0.5*(sx_p(t)+sx_g(t)), lambda t: 0.5*(sy_p(t)+sy_g(t)), al_p, dy_p, (305, 128), "#C8F8FF")
+    add_jd14_text(A, "SUPER", d, lambda t: 0.5*(sx_p(t)+sx_g(t)), lambda t: 0.5*(sy_p(t)+sy_g(t)), al_p, dy_p, (305, 128), "#D6FAFF")
     anims["Super"] = A
 
     # -------------------- 3. GOOD (72 ticks -> 0.84s) --------------------
     d = 0.84
     A = Anim(d)
     col_sy_g, col_al_g = tape_col_fns("good", "GodRays", 200.0, 72.0, d, peak_gain=1.28)
-    dg_al_g = tape_dglow_fn("good", "DGlow", 72.0, d, gain=0.92)
-    # Color exacto de UbiArt feedback_good.tape.ckd: (0.008, 0.678, 0.827) -> #02ADD3
+    dg_al_g = tape_dglow_fn("good", "DGlow", 72.0, d, gain=0.72)
+    A.layer("dglow", 0.0, d, "normal", x=0.0, y=55.0, size=(490, 450), a=dg_al_g, col="#02ADD3")
     A.layer("col_coach", 0.0, d, "normal", x=0.0, y=TOP_Y, size=(325, COL_H - 18), sy=col_sy_g, a=col_al_g, col="#02ADD3", anchor_y=0.5)
-    A.layer("dglow", 0.0, d, "additive", x=0.0, y=55.0, size=(500, 460), a=dg_al_g, col="#02ADD3")
-    # Las burbujas bokeh reales de ui_com_fx_lens_bubbles calibradas para verse traslucidas sin saturar el centro (JAZZY GOOD!)
     good_bokeh = [
-        ("bubble_fill",   10,  22, 248, 0.00, 0.72, 0.34, "#10C2F4"),
-        ("bubble_ring", -122, 134, 198, 0.01, 0.70, 0.54, "#24DCFF"),
-        ("bubble_ring",  144,  98, 134, 0.03, 0.66, 0.62, "#2EE2FF"),
-        ("bubble_fill",  -92, -10, 158, 0.02, 0.65, 0.36, "#18CEFF"),
-        ("spark_orb",     88,  -6, 148, 0.04, 0.64, 0.50, "#4AE8FF"),
-        ("bubble_soft",  -28, 190, 168, 0.02, 0.68, 0.30, "#14C8F5"),
-        ("bubble_ring",   46, 152, 114, 0.06, 0.60, 0.46, "#58ECFF"),
-        ("spark_orb",   -152,  56,  94, 0.05, 0.56, 0.44, "#40E4FF"),
+        ("bubble_fill",   10,  22, 248, 0.00, 0.72, 0.36, "#44DCFF"),
+        ("bubble_ring", -122, 134, 198, 0.01, 0.70, 0.64, "#6CECFF"),
+        ("bubble_ring",  144,  98, 134, 0.03, 0.66, 0.70, "#7EF0FF"),
+        ("bubble_fill",  -92, -10, 158, 0.02, 0.65, 0.42, "#54E2FF"),
+        ("spark_orb",     88,  -6, 148, 0.04, 0.64, 0.58, "#8CF2FF"),
+        ("bubble_soft",  -28, 190, 168, 0.02, 0.68, 0.36, "#5CE6FF"),
+        ("bubble_ring",   46, 152, 114, 0.06, 0.60, 0.54, "#94F4FF"),
+        ("spark_orb",   -152,  56,  94, 0.05, 0.56, 0.52, "#7CF0FF"),
     ]
     for reg_b, bx, by, bsz, t0_, life_, am, col_b in good_bokeh:
-        A.layer(reg_b, t0_, min(d, t0_ + life_), "additive",
+        A.layer(reg_b, t0_, min(d - 0.02, t0_ + life_), "normal",
                 x=[(t0_, bx * 0.78, "outCubic"), (t0_ + life_, bx * 1.10)],
                 y=[(t0_, by - 16, "outCubic"), (t0_ + life_, by + 32)],
                 size=(bsz, bsz),
@@ -711,82 +708,72 @@ def build_jd2014_anims():
                 a=[(t0_, 0.0), (t0_ + 0.07, am), (t0_ + life_ * 0.58, am * 0.82), (t0_ + life_, 0.0)],
                 col=col_b)
     sx, sy, al, dy = tape_text_fns("good", "Good_Text", 56.0, 28.0, 72.0, d, y_drift_px=24.0)
-    add_jd14_text(A, "GOOD", d, sx, sy, al, dy, (258, 128), "#5CE8FF")
+    add_jd14_text(A, "GOOD", d, sx, sy, al, dy, (258, 128), "#78EEFF")
     anims["Good"] = A
 
     # -------------------- 4. OK (48 ticks -> 0.64s) --------------------
     d = 0.64
     A = Anim(d)
     col_sy_o, col_al_o = tape_col_fns("ok", "GodRays", 200.0, 48.0, d, peak_gain=1.32)
-    dg_al_o = tape_dglow_fn("ok", "DGlow", 48.0, d, gain=1.25)
-    # Color exacto de UbiArt feedback_ok.tape.ckd: (0.875, 0.204, 0.976) -> #DF34F9 / #CA16E8
+    dg_al_o = tape_dglow_fn("ok", "DGlow", 48.0, d, gain=0.85)
+    A.layer("dglow", 0.0, d, "normal", x=0.0, y=45.0, size=(410, 390), a=dg_al_o, col="#DF34F9")
     A.layer("col_coach", 0.0, d, "normal", x=0.0, y=TOP_Y, size=(248, COL_H - 22), sy=col_sy_o, a=col_al_o, col="#C914E8", anchor_y=0.5)
-    A.layer("dglow", 0.0, d, "additive", x=0.0, y=45.0, size=(420, 400), a=dg_al_o, col="#DF34F9")
-    # Pulso suave magenta limpio detras de OK (sin anillos duros falsos, fiel a HAPPY OK / FUNKY OK)
-    A.layer("bubble_soft", 0.0, 0.42, "additive", x=0.0, y=4.0, size=(220, 180),
-            sc=[(0.0, 0.65, "outCubic"), (0.42, 1.35)], a=[(0.0, 0.52), (0.42, 0.0)], col="#FF58FF")
+    A.layer("bubble_soft", 0.0, 0.42, "normal", x=0.0, y=4.0, size=(220, 180),
+            sc=[(0.0, 0.65, "outCubic"), (0.42, 1.35)], a=[(0.0, 0.48), (0.42, 0.0)], col="#FF8CFF")
     sx, sy, al, dy = tape_text_fns("ok", "Ok_Text", 28.0, 28.0, 48.0, d, y_drift_px=15.0)
-    add_jd14_text(A, "OK", d, sx, sy, al, dy, (146, 128), "#FF80FF")
+    add_jd14_text(A, "OK", d, sx, sy, al, dy, (146, 128), "#FF94FF")
     anims["Ok"] = A
 
     # -------------------- 5. GOLD / YEAH (72 ticks -> 0.90s) --------------------
     d = 0.90
     A = Anim(d)
     tp_gold = tapes["gold"]
-    spot_al_clip = find_clip(tp_gold, "AlphaClip", "Gold_Spot")
     rays_pr_clip = find_clip(tp_gold, "ProportionClip", "Gold_GodRays")
-    rays_al_clip = find_clip(tp_gold, "AlphaClip", "Gold_GodRays")
-    spot_ka = spot_al_clip["Curve"]["Curve"]["Keys"]
     rays_kx = rays_pr_clip["CurveX"]["Curve"]["Keys"]
-    rays_ka = rays_al_clip["Curve"]["Curve"]["Keys"]
 
-    # Gold_Spot: columna dorada grad_v_coach brillante y sostenida (igual que panel 5 de referencia JD14!)
-    A.layer("col_coach", 0.0, d, "normal", x=0.0, y=TOP_Y, size=(355, COL_H - 10),
+    # 1) DGlow ambar al fondo, 2) Columna dorada, 3) Abanico radial de 12 rayos arriba, 4) Nucleo x_flare luminoso, 5) Chispas, 6) YEAH
+    A.layer("dglow", 0.0, d, "normal", x=0.0, y=25.0, size=(520, 480),
+            a=tape_dglow_fn("gold", "DGlow", 72.0, d, gain=0.82), col="#FFA008")
+    A.layer("col_coach", 0.0, 0.72, "normal", x=0.0, y=TOP_Y, size=(355, COL_H - 10),
             sy=[(0.0, 0.05, "outCubic"), (0.06, 1.0)],
-            a=[(0.0, 0.72), (0.14, 0.82), (0.38, 0.62), (0.68, 0.0)],
+            a=[(0.0, 0.74), (0.14, 0.84), (0.40, 0.64), (0.72, 0.0)],
             col="#FFBE10", anchor_y=0.5)
-    # Gold_GodRays: abanico radial de 12 rayos que hace slam de 540->360 (1.5x -> 1.0x) igual que el .tape.ckd!
-    A.layer("sunburst_12", 0.0, d, "additive", x=0.0, y=22.0, size=(660, 660),
+    A.layer("sunburst_12", 0.0, 0.76, "normal", x=0.0, y=22.0, size=(640, 640),
             sc=lambda t: eval_ubi_bezier(rays_kx, (t / d) * 72.0) / 360.0,
-            rot=[(0.0, -3.0), (d, 10.0)],
-            a=[(0.0, 0.55), (0.14, 0.90), (0.42, 0.68), (0.72, 0.0)],
-            col="#FFD854")
-    # Capa secundaria con x_flare + onda suave spark_wave (sin anillo duro sobre YEAH)
-    A.layer("x_flare", 0.0, 0.55, "additive", x=0.0, y=10.0, size=(500, 500),
-            sc=[(0.0, 0.7, "outCubic"), (0.55, 1.40)], a=[(0.0, 0.78), (0.55, 0.0)], col="#FFE888")
-    A.layer("dglow", 0.0, d, "additive", x=0.0, y=25.0, size=(540, 500),
-            a=tape_dglow_fn("gold", "DGlow", 72.0, d, gain=1.15), col="#FF9800")
-    A.layer("spark_wave", 0.01, 0.44, "additive", x=0.0, y=10.0, size=(190, 190),
-            sc=[(0.01, 0.6, "outCubic"), (0.44, 2.7)], a=[(0.01, 0.45), (0.44, 0.0)], col="#FFE684")
-    # FXClip SERIALIZED:be64fcd7 -> explosion de chispas y destellos dorados
+            rot=[(0.0, -3.0), (0.76, 10.0)],
+            a=[(0.0, 0.58), (0.14, 0.92), (0.44, 0.70), (0.76, 0.0)],
+            col="#FFE474")
+    A.layer("x_flare", 0.0, 0.55, "normal", x=0.0, y=10.0, size=(490, 490),
+            sc=[(0.0, 0.7, "outCubic"), (0.55, 1.38)], a=[(0.0, 0.82), (0.55, 0.0)], col="#FFF4AC")
+    A.layer("spark_wave", 0.01, 0.44, "normal", x=0.0, y=10.0, size=(190, 190),
+            sc=[(0.01, 0.6, "outCubic"), (0.44, 2.7)], a=[(0.01, 0.50), (0.44, 0.0)], col="#FFF2A6")
     for i in range(26):
         s = 0.01 + rng.uniform(0.0, 0.14)
         l = rng.uniform(0.38, 0.64)
         ang = rng.uniform(0, 2 * math.pi)
-        r0, r1 = rng.uniform(25, 70), rng.uniform(160, 310)
+        r0, r1 = rng.uniform(25, 70), rng.uniform(160, 305)
         sz = rng.uniform(14, 28) if i % 3 == 0 else rng.uniform(9, 18)
         reg_sp = "spark_cross" if i % 3 == 0 else ("point_glow" if i % 2 == 0 else "sparks_32")
-        A.layer(reg_sp, s, min(d, s + l), "additive",
+        A.layer(reg_sp, s, min(d - 0.02, s + l), "normal",
                 x=[(s, math.cos(ang) * r0, "outCubic"), (s + l, math.cos(ang) * r1)],
                 y=[(s, math.sin(ang) * r0 + 10, "outCubic"), (s + l, math.sin(ang) * r1 + 25)],
                 size=(sz, sz), sc=[(s, 0.4, "outBack"), (s + 0.1, 1.0), (s + l, 0.0)],
                 rot=rng.uniform(0, 180),
                 a=[(s, 0.0), (s + 0.05, 1.0), (s + l, 0.0)],
-                col="#FFF8C8" if i % 2 == 0 else "#FFD038")
+                col="#FFFCE0" if i % 2 == 0 else "#FFE05C")
     sx, sy, _, dy = tape_text_fns("gold", "Yeah_Text", 64.0, 32.0, 72.0, d, y_drift_px=18.0)
-    al_yeah = lambda t: 1.0 if t <= 0.36 else max(0.0, 1.0 - ((t - 0.36) / (d - 0.36)) ** 1.35)
-    add_jd14_text(A, "YEAH", d, sx, sy, al_yeah, dy, (315, 152), "#FFE87C")
+    al_yeah = lambda t: 1.0 if t <= 0.44 else max(0.0, 1.0 - ((t - 0.44) / (d - 0.44)) ** 1.25)
+    add_jd14_text(A, "YEAH", d, sx, sy, al_yeah, dy, (315, 152), "#FFF098")
     anims["Gold"] = A
 
     # -------------------- 6. BAD & GOLDMISS (48 ticks -> 0.62s, SIN columna, 10.0 grados!) --------------------
     for an_name, tp_key, txt_sub, reg_name, glow_hex, dg_gain in [
-        ("Bad",      "bad",      "Bad_Text", "MISS",     "#C40606", 2.2),
-        ("GoldMiss", "gold_bad", "Bad_Gold", "GOLDMISS", "#FF7800", 1.7),
+        ("Bad",      "bad",      "Bad_Text", "MISS",     "#D41414", 1.8),
+        ("GoldMiss", "gold_bad", "Bad_Gold", "GOLDMISS", "#FF8810", 1.5),
     ]:
         d = 0.62
         A = Anim(d)
-        # En feedback_bad.tape.ckd NO hay columna GodRays: solo un DGlow sutil detras de la X inclinada 10 grados!
-        A.layer("dglow", 0.0, d, "additive", x=0.0, y=0.0, size=(310, 310),
+        A.layer("dglow", 0.0, d, "normal", x=0.0, y=0.0, size=(300, 300),
                 a=tape_dglow_fn(tp_key, "DGlow", 48.0, d, gain=dg_gain), col=glow_hex)
         sx, sy, al, dy = tape_text_fns(tp_key, txt_sub, 28.0, 28.0, 48.0, d, y_drift_px=20.0)
         add_jd14_text(A, reg_name, d, sx, sy, al, dy, (124, 124), glow_hex)
@@ -794,12 +781,9 @@ def build_jd2014_anims():
 
     return anims
 
-# ======================= Coreografia 2: JUST DANCE 4 (Cortina Izquierda + Medio-Sol + Bokeh UbiArt) =======================
+# ======================= Coreografia 2: JUST DANCE 4 (Cortina Izquierda + Medio-Sol + Bokeh UbiArt, Normal-Alpha) =======================
 def build_jd4_anims():
-    """Coreografia fiel a las capturas reales del HUD de Just Dance 4:
-    linea divisoria vertical izquierda nitida, cortina unilateral que se desvanece a la derecha,
-    medio-sol verde-lima a la izquierda de PERFECT, burbujas UbiArt alrededor de GOOD,
-    variante celeste claro en SUPER, y cruz X horizontal sin cortina."""
+    """Coreografia fiel al HUD de Just Dance 4 calibrada de atras hacia adelante para mezcla normal con alpha (UI Toolkit)."""
     rng = random.Random(2012)
     anims = {}
 
@@ -807,35 +791,33 @@ def build_jd4_anims():
         cx = x_left + width * 0.5
         A.layer("jd4_curtain", 0.0, dur, "normal", x=cx, y=28.0, size=(width, height),
                 sx=[(0.0, 0.15, "outCubic"), (0.08, 1.0)],
-                a=[(0.0, 0.0), (0.05, alpha_peak), (0.34, alpha_peak * 0.92), (dur, 0.0)],
+                a=[(0.0, 0.0), (0.05, alpha_peak), (0.44, alpha_peak * 0.92), (dur, 0.0)],
                 col=col_main)
-        A.layer("jd4_curtain", 0.0, dur * 0.85, "additive", x=x_left + width * 0.28, y=28.0, size=(width * 0.56, height * 0.92),
+        A.layer("jd4_curtain", 0.0, dur * 0.85, "normal", x=x_left + width * 0.28, y=28.0, size=(width * 0.56, height * 0.92),
                 sx=[(0.0, 0.1, "outCubic"), (0.08, 1.0)],
-                a=[(0.0, 0.0), (0.06, alpha_peak * 0.42), (dur * 0.85, 0.0)],
-                col=col_bright)
+                a=[(0.0, 0.0), (0.06, alpha_peak * 0.52), (dur * 0.85, 0.0)],
+                col=col_bright, att_name="jd4_curtain_hi")
 
     def add_jd4_text(A, reg, dur, size_wh, flash_col, slam=1.34):
         sc = [(0.0, slam, "outCubic"), (0.09, 0.97, "outQuad"), (0.16, 1.0), (dur, 1.02)]
-        al = [(0.0, 0.0), (0.03, 1.0), (dur * 0.58, 1.0), (dur, 0.0)]
+        al = [(0.0, 0.0), (0.03, 1.0), (dur * 0.68, 1.0), (dur, 0.0)]
         xx = [(0.0, -8.0, "outCubic"), (0.14, 0.0), (dur, 4.0)]
-        A.layer(reg, 0.0, 0.24, "additive", x=xx, y=0.0, size=size_wh,
+        A.layer(reg, 0.0, 0.24, "normal", x=xx, y=0.0, size=size_wh,
                 sc=[(0.0, slam * 1.06, "outCubic"), (0.24, 1.02)],
-                a=[(0.0, 0.55), (0.24, 0.0)], col=flash_col)
-        A.layer(reg, 0.0, dur, "normal", x=xx, y=0.0, size=size_wh, sc=sc, a=al, col="#ffffff")
+                a=[(0.0, 0.56), (0.24, 0.0)], col=flash_col, att_name=f"{reg}_glow")
+        A.layer(reg, 0.0, dur, "normal", x=xx, y=0.0, size=size_wh, sc=sc, a=al, col="#ffffff", att_name=reg)
 
     # -------------------- 1. PERFECT (HAPPY | PERFECT / JAZZY | PERFECT) --------------------
     d = 0.86
     A = Anim(d)
-    X_DIV = -212.0  # Justo a la izquierda de la 'P' de PERFECT
-    add_jd4_curtain(A, d, X_DIV, 490, 390, "#6FD408", "#B8F830", alpha_peak=0.78)
-    # Medio-sol icónico anclado sobre la linea divisoria izquierda irradiando 180 grados hacia la derecha (sin quemar la 'P')!
-    A.layer("jd4_half_sun", 0.0, d, "additive", x=X_DIV + 195.0, y=14.0, size=(410, 430),
+    X_DIV = -212.0
+    A.layer("dglow", 0.0, d * 0.88, "normal", x=X_DIV + 110.0, y=10.0, size=(360, 320),
+            a=[(0.0, 0.0), (0.06, 0.42), (d * 0.88, 0.0)], col="#8CE814")
+    add_jd4_curtain(A, d, X_DIV, 490, 390, "#6FD408", "#CAFF54", alpha_peak=0.80)
+    A.layer("jd4_half_sun", 0.0, d, "normal", x=X_DIV + 195.0, y=14.0, size=(410, 430),
             sx=[(0.0, 0.35, "outBack"), (0.12, 1.0), (d, 1.12)],
             sy=[(0.0, 0.45, "outBack"), (0.12, 1.0), (d, 1.08)],
-            a=[(0.0, 0.0), (0.05, 0.82), (0.38, 0.72), (d, 0.0)], col="#ADFA24")
-    A.layer("dglow", 0.0, d * 0.85, "additive", x=X_DIV + 85.0, y=10.0, size=(310, 300),
-            a=[(0.0, 0.0), (0.06, 0.30), (d * 0.85, 0.0)], col="#CEFF48")
-    # Puntitos brillantes dentro del nucleo solar izquierdo y alrededor de PERFECT
+            a=[(0.0, 0.0), (0.05, 0.88), (0.44, 0.76), (d, 0.0)], col="#D4FF62")
     for i in range(20):
         s = 0.01 + rng.uniform(0.0, 0.18)
         l = rng.uniform(0.32, 0.55)
@@ -844,132 +826,129 @@ def build_jd4_anims():
         r1 = r0 + rng.uniform(55, 165)
         sz = rng.uniform(8, 18)
         reg_sp = "spark_pin" if i % 3 == 0 else "sparks_32"
-        A.layer(reg_sp, s, min(d, s + l), "additive",
+        A.layer(reg_sp, s, min(d - 0.02, s + l), "normal",
                 x=[(s, X_DIV + 14 + math.cos(ang) * r0, "outQuad"), (s + l, X_DIV + 14 + math.cos(ang) * r1)],
                 y=[(s, 10 + math.sin(ang) * r0, "outQuad"), (s + l, 10 + math.sin(ang) * r1)],
                 size=(sz, sz), sc=[(s, 0.4), (s + 0.08, 1.0), (s + l, 0.1)],
-                a=[(s, 0.0), (s + 0.05, 0.88), (s + l, 0.0)],
-                col="#FFFFFF" if i % 2 == 0 else "#E8FF78")
-    add_jd4_text(A, "PERFECT", d, (425, 112), "#C8FF3E", slam=1.32)
+                a=[(s, 0.0), (s + 0.05, 0.92), (s + l, 0.0)],
+                col="#FFFFFF" if i % 2 == 0 else "#EEFF98")
+    add_jd4_text(A, "PERFECT", d, (425, 112), "#D6FF64", slam=1.32)
     anims["Perfect"] = A
 
     # -------------------- 2. SUPER (Variante celeste claro entre GOOD y PERFECT) --------------------
     d = 0.84
     A = Anim(d)
     X_DIV = -172.0
-    add_jd4_curtain(A, d, X_DIV, 440, 375, "#4CCCF8", "#A8F0FF", alpha_peak=0.76)
-    # Medio abanico celeste delicado + burbujas bokeh celestes + destellos (manteniendo la 'S' 100% legible)
-    A.layer("jd4_half_sun", 0.0, d * 0.9, "additive", x=X_DIV + 165.0, y=12.0, size=(345, 360),
+    add_jd4_curtain(A, d, X_DIV, 440, 375, "#4CCCF8", "#C0F6FF", alpha_peak=0.78)
+    A.layer("jd4_half_sun", 0.0, d * 0.9, "normal", x=X_DIV + 165.0, y=12.0, size=(345, 360),
             sx=[(0.0, 0.3, "outCubic"), (0.14, 0.95), (d * 0.9, 1.08)],
-            a=[(0.0, 0.0), (0.07, 0.40), (0.36, 0.32), (d * 0.9, 0.0)], col="#A6F0FF")
+            a=[(0.0, 0.0), (0.07, 0.48), (0.40, 0.38), (d * 0.9, 0.0)], col="#CEFAFF")
     for reg_b, ox_, oy_, bsz, t0_, life_, am in [
-        ("bubble_soft",  70,  34, 185, 0.00, 0.62, 0.28),
-        ("bubble_ring", 118,  54, 152, 0.02, 0.64, 0.54),
-        ("spark_orb",   225,  22, 138, 0.04, 0.60, 0.56),
-        ("bubble_fill", 165, -36, 148, 0.03, 0.58, 0.38),
-        ("bubble_ring", 285,  48, 108, 0.05, 0.55, 0.48),
+        ("bubble_soft",  70,  34, 185, 0.00, 0.62, 0.34),
+        ("bubble_ring", 118,  54, 152, 0.02, 0.64, 0.62),
+        ("spark_orb",   225,  22, 138, 0.04, 0.60, 0.64),
+        ("bubble_fill", 165, -36, 148, 0.03, 0.58, 0.44),
+        ("bubble_ring", 285,  48, 108, 0.05, 0.55, 0.54),
     ]:
-        A.layer(reg_b, t0_, min(d, t0_ + life_), "additive",
+        A.layer(reg_b, t0_, min(d - 0.02, t0_ + life_), "normal",
                 x=[(t0_, X_DIV + ox_ * 0.85, "outQuad"), (t0_ + life_, X_DIV + ox_ * 1.08)],
                 y=[(t0_, oy_ - 10, "outQuad"), (t0_ + life_, oy_ + 22)],
                 size=(bsz, bsz), sc=[(t0_, 0.5, "outBack"), (t0_ + 0.14, 1.0), (t0_ + life_, 1.1)],
-                a=[(t0_, 0.0), (t0_ + 0.07, am), (t0_ + life_, 0.0)], col="#C0F6FF")
+                a=[(t0_, 0.0), (t0_ + 0.07, am), (t0_ + life_, 0.0)], col="#DCFBFF")
     for i in range(14):
         s = 0.02 + rng.uniform(0.0, 0.16)
         l = rng.uniform(0.32, 0.52)
         px = rng.uniform(X_DIV + 15, X_DIV + 340)
         py = rng.uniform(-55, 85)
         sz = rng.uniform(12, 26)
-        A.layer("spark_cross" if i % 3 == 0 else "sparks_32", s, min(d, s + l), "additive",
+        A.layer("spark_cross" if i % 3 == 0 else "sparks_32", s, min(d - 0.02, s + l), "normal",
                 x=[(s, px), (s + l, px + rng.uniform(10, 40))],
                 y=[(s, py), (s + l, py + rng.uniform(25, 70))],
                 size=(sz, sz), sc=[(s, 0.35), (s + 0.08, 1.0), (s + l, 0.0)],
-                rot=rng.uniform(0, 90), a=[(s, 0.0), (s + 0.05, 0.9), (s + l, 0.0)], col="#EEFCFF")
-    add_jd4_text(A, "SUPER", d, (328, 110), "#BFF6FF", slam=1.34)
+                rot=rng.uniform(0, 90), a=[(s, 0.0), (s + 0.05, 0.92), (s + l, 0.0)], col="#F2FDFF")
+    add_jd4_text(A, "SUPER", d, (328, 110), "#D0FAFF", slam=1.34)
     anims["Super"] = A
 
     # -------------------- 3. GOOD (FUNKY | GOOD) --------------------
     d = 0.82
     A = Anim(d)
     X_DIV = -162.0
-    add_jd4_curtain(A, d, X_DIV, 415, 365, "#127CE6", "#58C8FF", alpha_peak=0.84)
-    # Nucleo luminoso cian arriba-izquierda detras de 'GO' + racimo de burbujas bokeh UbiArt a la derecha de la linea!
-    A.layer("bubble_soft", 0.0, 0.66, "additive", x=X_DIV + 92.0, y=38.0, size=(240, 220),
-            sc=[(0.0, 0.6, "outCubic"), (0.66, 1.15)], a=[(0.0, 0.0), (0.06, 0.85), (0.66, 0.0)], col="#7CE2FF")
+    add_jd4_curtain(A, d, X_DIV, 415, 365, "#127CE6", "#74D8FF", alpha_peak=0.86)
+    A.layer("bubble_soft", 0.0, 0.66, "normal", x=X_DIV + 92.0, y=38.0, size=(240, 220),
+            sc=[(0.0, 0.6, "outCubic"), (0.66, 1.15)], a=[(0.0, 0.0), (0.06, 0.72), (0.66, 0.0)], col="#98ECFF")
     jd4_bubbles = [
-        ("bubble_ring",  88,  46, 175, 0.00, 0.68, 0.82, "#66DCFF"),
-        ("bubble_fill", 168,  64, 152, 0.02, 0.66, 0.65, "#48C8FF"),
-        ("bubble_ring", 248,  26, 162, 0.03, 0.66, 0.76, "#58D4FF"),
-        ("bubble_ring", 132, -38, 144, 0.02, 0.62, 0.72, "#4CC8FF"),
-        ("spark_orb",   215, -34, 118, 0.04, 0.60, 0.68, "#7CE4FF"),
-        ("bubble_fill",  66, -24, 115, 0.01, 0.58, 0.58, "#38B8FF"),
-        ("bubble_ring", 296,  62, 104, 0.05, 0.56, 0.58, "#68D8FF"),
+        ("bubble_ring",  88,  46, 175, 0.00, 0.68, 0.84, "#92ECFF"),
+        ("bubble_fill", 168,  64, 152, 0.02, 0.66, 0.64, "#74E0FF"),
+        ("bubble_ring", 248,  26, 162, 0.03, 0.66, 0.78, "#88E8FF"),
+        ("bubble_ring", 132, -38, 144, 0.02, 0.62, 0.74, "#7CE4FF"),
+        ("spark_orb",   215, -34, 118, 0.04, 0.60, 0.72, "#A8F2FF"),
+        ("bubble_fill",  66, -24, 115, 0.01, 0.58, 0.58, "#64DAFF"),
+        ("bubble_ring", 296,  62, 104, 0.05, 0.56, 0.62, "#92ECFF"),
     ]
     for reg_b, ox_, oy_, bsz, t0_, life_, am, col_b in jd4_bubbles:
-        A.layer(reg_b, t0_, min(d, t0_ + life_), "additive",
+        A.layer(reg_b, t0_, min(d - 0.02, t0_ + life_), "normal",
                 x=[(t0_, X_DIV + ox_ * 0.84, "outCubic"), (t0_ + life_, X_DIV + ox_ * 1.08)],
                 y=[(t0_, oy_ - 10, "outCubic"), (t0_ + life_, oy_ + 22)],
                 size=(bsz, bsz), sc=[(t0_, 0.48, "outBack"), (t0_ + 0.13, 1.0), (t0_ + life_, 1.10)],
                 a=[(t0_, 0.0), (t0_ + 0.06, am), (t0_ + life_ * 0.6, am * 0.78), (t0_ + life_, 0.0)],
                 col=col_b)
-    add_jd4_text(A, "GOOD", d, (295, 110), "#68D4FF", slam=1.35)
+    add_jd4_text(A, "GOOD", d, (295, 110), "#8CE4FF", slam=1.35)
     anims["Good"] = A
 
     # -------------------- 4. OK (JAZZY | OK / CRAZY | OK) --------------------
     d = 0.64
     A = Anim(d)
     X_DIV = -112.0
-    add_jd4_curtain(A, d, X_DIV, 330, 350, "#9A12F0", "#DF58FF", alpha_peak=0.88)
-    A.layer("dglow", 0.0, d * 0.85, "additive", x=X_DIV + 95.0, y=8.0, size=(260, 240),
-            a=[(0.0, 0.0), (0.05, 0.48), (d * 0.85, 0.0)], col="#D848FF")
-    add_jd4_text(A, "OK", d, (162, 108), "#E878FF", slam=1.30)
+    A.layer("dglow", 0.0, d * 0.85, "normal", x=X_DIV + 95.0, y=8.0, size=(280, 260),
+            a=[(0.0, 0.0), (0.05, 0.52), (d * 0.85, 0.0)], col="#D848FF")
+    add_jd4_curtain(A, d, X_DIV, 330, 350, "#9A12F0", "#EE88FF", alpha_peak=0.88)
+    add_jd4_text(A, "OK", d, (162, 108), "#F094FF", slam=1.30)
     anims["Ok"] = A
 
     # -------------------- 5. GOLD / YEAH --------------------
     d = 0.88
     A = Anim(d)
     X_DIV = -172.0
-    add_jd4_curtain(A, d, X_DIV, 450, 380, "#F09C00", "#FFE468", alpha_peak=0.85)
-    A.layer("sunburst_12", 0.0, d, "additive", x=0.0, y=8.0, size=(620, 620),
-            sc=[(0.0, 0.55, "outBack"), (0.14, 1.0), (d, 1.22)],
+    add_jd4_curtain(A, d, X_DIV, 450, 380, "#F09C00", "#FFEC8C", alpha_peak=0.85)
+    A.layer("sunburst_12", 0.0, d, "normal", x=0.0, y=8.0, size=(610, 610),
+            sc=[(0.0, 0.55, "outBack"), (0.14, 1.0), (d, 1.20)],
             rot=[(0.0, 0.0), (d, 24.0)],
-            a=[(0.0, 0.0), (0.06, 0.92), (0.42, 0.78), (d, 0.0)], col="#FFD646")
-    A.layer("x_flare", 0.0, 0.52, "additive", x=0.0, y=4.0, size=(480, 480),
-            sc=[(0.0, 0.65, "outCubic"), (0.52, 1.38)], a=[(0.0, 0.85), (0.52, 0.0)], col="#FFF098")
-    A.layer("circle_thin", 0.01, 0.50, "additive", x=0.0, y=4.0, size=(170, 170),
-            sc=[(0.01, 0.6, "outCubic"), (0.50, 2.9)], a=[(0.01, 0.8), (0.50, 0.0)], col="#FFE680")
+            a=[(0.0, 0.0), (0.06, 0.92), (0.46, 0.78), (d, 0.0)], col="#FFE474")
+    A.layer("x_flare", 0.0, 0.52, "normal", x=0.0, y=4.0, size=(470, 470),
+            sc=[(0.0, 0.65, "outCubic"), (0.52, 1.36)], a=[(0.0, 0.86), (0.52, 0.0)], col="#FFF6B8")
+    A.layer("circle_thin", 0.01, 0.50, "normal", x=0.0, y=4.0, size=(170, 170),
+            sc=[(0.01, 0.6, "outCubic"), (0.50, 2.9)], a=[(0.01, 0.82), (0.50, 0.0)], col="#FFF0A0")
     for i in range(22):
         s = 0.01 + rng.uniform(0.0, 0.14)
         l = rng.uniform(0.35, 0.60)
         ang = rng.uniform(0, 2 * math.pi)
-        r0, r1 = rng.uniform(25, 65), rng.uniform(150, 290)
+        r0, r1 = rng.uniform(25, 65), rng.uniform(150, 285)
         sz = rng.uniform(14, 32)
-        A.layer("spark_cross" if i % 3 == 0 else "sparks_32", s, min(d, s + l), "additive",
+        A.layer("spark_cross" if i % 3 == 0 else "sparks_32", s, min(d - 0.02, s + l), "normal",
                 x=[(s, math.cos(ang) * r0, "outCubic"), (s + l, math.cos(ang) * r1)],
                 y=[(s, math.sin(ang) * r0, "outCubic"), (s + l, math.sin(ang) * r1)],
                 size=(sz, sz), sc=[(s, 0.4), (s + 0.08, 1.0), (s + l, 0.0)],
-                rot=rng.uniform(0, 180), a=[(s, 0.0), (s + 0.05, 1.0), (s + l, 0.0)], col="#FFF6C0")
-    add_jd4_text(A, "YEAH", d, (305, 114), "#FFE474", slam=1.45)
+                rot=rng.uniform(0, 180), a=[(s, 0.0), (s + 0.05, 1.0), (s + l, 0.0)], col="#FFFCE0")
+    add_jd4_text(A, "YEAH", d, (305, 114), "#FFF098", slam=1.45)
     anims["Gold"] = A
 
     # -------------------- 6. BAD & GOLDMISS (HAPPY | X: horizontal 0 grados, sin cortina!) --------------------
     for an_name, reg_name, glow_hex in [("Bad", "MISS", "#E01434"), ("GoldMiss", "GOLDMISS", "#FFA800")]:
         d = 0.58
         A = Anim(d)
-        A.layer("dglow", 0.0, d * 0.85, "additive", x=0.0, y=0.0, size=(240, 220),
-                a=[(0.0, 0.0), (0.05, 0.34), (d * 0.85, 0.0)], col=glow_hex)
+        A.layer("dglow", 0.0, d * 0.85, "normal", x=0.0, y=0.0, size=(240, 220),
+                a=[(0.0, 0.0), (0.05, 0.40), (d * 0.85, 0.0)], col=glow_hex)
         shake = [(0.0, 0.0), (0.05, -8.0), (0.10, 6.0), (0.15, -3.0), (0.20, 0.0)]
         sc = [(0.0, 1.42, "outCubic"), (0.09, 0.96, "outQuad"), (0.15, 1.0), (d, 1.0)]
-        al = [(0.0, 0.0), (0.02, 1.0), (0.36, 1.0), (d, 0.0)]
-        A.layer(reg_name, 0.0, d, "normal", x=shake, y=0.0, size=(122, 110), sc=sc, a=al, col="#ffffff")
+        al = [(0.0, 0.0), (0.02, 1.0), (0.38, 1.0), (d, 0.0)]
+        A.layer(reg_name, 0.0, d, "normal", x=shake, y=0.0, size=(122, 110), sc=sc, a=al, col="#ffffff", att_name=reg_name)
         anims[an_name] = A
 
     return anims
 
-# ======================= Coreografia 3: CUSTOM SCRATCH (Plantilla Limpia Desde 0 con Banco UbiArt) =======================
+# ======================= Coreografia 3: CUSTOM SCRATCH (Plantilla Limpia Desde 0) =======================
 def build_scratch_anims():
-    """Plantilla neutra en blanco puro con todas las regiones FX reales de UbiArt en el atlas,
-    ideal para personalizar colores, fuentes y capas desde cero en LiamToolScores2Unity."""
+    """Plantilla neutra en blanco puro compatible 1:1 con Spine 4.0.64 y UI Toolkit normal-alpha."""
     anims = {}
     specs = [
         ("Perfect", "PERFECT", (415, 120), "#6EFF46", 0.85, True),
@@ -983,19 +962,19 @@ def build_scratch_anims():
     rng = random.Random(77)
     for an, reg, wh, col, d, with_sparks in specs:
         A = Anim(d)
-        A.layer("dglow", 0.0, d, "additive", x=0.0, y=0.0, size=(420, 320),
-                sc=[(0.0, 0.6, "outCubic"), (d, 1.25)], a=[(0.0, 0.0), (0.08, 0.55), (d, 0.0)], col=col)
+        A.layer("dglow", 0.0, d, "normal", x=0.0, y=0.0, size=(420, 320),
+                sc=[(0.0, 0.6, "outCubic"), (d, 1.25)], a=[(0.0, 0.0), (0.08, 0.58), (d, 0.0)], col=col)
         if an in ("Perfect", "Gold"):
-            A.layer("circle_thin", 0.01, 0.50, "additive", size=(160, 160),
-                    sc=[(0.01, 0.6, "outCubic"), (0.50, 2.7)], a=[(0.01, 0.75), (0.50, 0.0)], col=col)
+            A.layer("circle_thin", 0.01, 0.50, "normal", size=(160, 160),
+                    sc=[(0.01, 0.6, "outCubic"), (0.50, 2.7)], a=[(0.01, 0.78), (0.50, 0.0)], col=col)
         if an == "Good":
             for i in range(6):
                 ang = i * math.pi / 3.0 + 0.3
-                A.layer("bubble_ring", 0.02, 0.62, "additive",
+                A.layer("bubble_ring", 0.02, 0.62, "normal",
                         x=[(0.02, math.cos(ang)*55, "outCubic"), (0.62, math.cos(ang)*145)],
                         y=[(0.02, math.sin(ang)*40, "outCubic"), (0.62, math.sin(ang)*110 + 25)],
                         size=(130, 130), sc=[(0.02, 0.5), (0.62, 1.05)],
-                        a=[(0.02, 0.0), (0.10, 0.7), (0.62, 0.0)], col=col)
+                        a=[(0.02, 0.0), (0.10, 0.75), (0.62, 0.0)], col=col)
         if with_sparks:
             for i in range(16):
                 s = 0.01 + rng.uniform(0.0, 0.14)
@@ -1003,22 +982,21 @@ def build_scratch_anims():
                 ang = rng.uniform(0, 2 * math.pi)
                 r1 = rng.uniform(120, 240)
                 sz = rng.uniform(14, 28)
-                A.layer("spark_cross" if i % 2 == 0 else "sparks_32", s, min(d, s + l), "additive",
+                A.layer("spark_cross" if i % 2 == 0 else "sparks_32", s, min(d - 0.02, s + l), "normal",
                         x=[(s, math.cos(ang)*30, "outCubic"), (s + l, math.cos(ang)*r1)],
                         y=[(s, math.sin(ang)*25, "outCubic"), (s + l, math.sin(ang)*r1)],
                         size=(sz, sz), sc=[(s, 0.4), (s + 0.08, 1.0), (s + l, 0.0)],
                         a=[(s, 0.0), (s + 0.05, 0.95), (s + l, 0.0)], col=col)
         sc = [(0.0, 1.36, "outCubic"), (0.10, 0.97, "outQuad"), (0.18, 1.0), (d, 1.02)]
-        al = [(0.0, 0.0), (0.03, 1.0), (d * 0.62, 1.0), (d, 0.0)]
-        A.layer(reg, 0.0, d, "normal", size=wh, sc=sc, a=al, col="#ffffff")
+        al = [(0.0, 0.0), (0.03, 1.0), (d * 0.68, 1.0), (d, 0.0)]
+        A.layer(reg, 0.0, d, "normal", size=wh, sc=sc, a=al, col="#ffffff", att_name=reg)
         anims[an] = A
     return anims
 
-# ======================= Miniatura Renderizada con el Motor Real =======================
+# ======================= Miniatura Renderizada con el Motor Real (256x256 RGBA 8-bit) =======================
 def make_thumbnail(lfx_path, png_path, title, badge_rgb):
     import preview_lfx as P
     th = Image.new("RGBA", (256, 256), (10, 8, 22, 255))
-    # Cuadricula 2x2 con Perfect, Super, Good y Gold reales renderizados en su frame pico!
     quads = [("Perfect", 0.16, (0, 28)), ("Super", 0.16, (128, 28)), ("Good", 0.16, (0, 142)), ("Gold", 0.16, (128, 142))]
     for an, t_sample, (qx, qy) in quads:
         im = P.render(lfx_path, png_path, an, t_sample, W=540, H=480, bg=(12, 10, 24)).convert("RGBA")
@@ -1029,10 +1007,59 @@ def make_thumbnail(lfx_path, png_path, title, badge_rgb):
     dr.line([(128, 28), (128, 256)], fill=(255, 255, 255, 35), width=1)
     dr.line([(0, 142), (256, 142)], fill=(255, 255, 255, 35), width=1)
     dr.text((128, 14), title, font=ImageFont.truetype(F_BOLD, 19), fill=(255, 255, 255, 255), anchor="mm")
-    return th
+    return th.convert("RGBA")
+
+def export_jdnext_delivery_package(src_dir, src_name, target_root, delivery_name):
+    """Empaqueta una carpeta ScoringFX_<delivery_name>/ + .zip cumpliendo 100% SCORINGFX-ENTREGA-MOTOR-2026-10-30.md."""
+    import zipfile
+    import spine_writer as SW
+
+    clean_nm = SW.clean_fx_name(delivery_name)
+    pkg_dir = os.path.join(target_root, f"ScoringFX_{clean_nm}")
+    os.makedirs(pkg_dir, exist_ok=True)
+
+    # Limpiar archivos previos
+    for old_f in os.listdir(pkg_dir):
+        fp = os.path.join(pkg_dir, old_f)
+        if os.path.isfile(fp):
+            os.remove(fp)
+
+    shutil.copy2(os.path.join(src_dir, f"ScoringFX_{src_name}.skel"), os.path.join(pkg_dir, f"ScoringFX_{clean_nm}.skel"))
+    shutil.copy2(os.path.join(src_dir, f"ScoringFX_{src_name}.png"), os.path.join(pkg_dir, f"ScoringFX_{clean_nm}.png"))
+    shutil.copy2(os.path.join(src_dir, f"ScoringFX_Thumbnail_{src_name}.png"), os.path.join(pkg_dir, f"ScoringFX_Thumbnail_{clean_nm}.png"))
+
+    # Ajustar 1.a linea del .atlas al nombre exacto del PNG de entrega
+    atl_lines = open(os.path.join(src_dir, f"ScoringFX_{src_name}.atlas"), encoding="utf-8").read().splitlines()
+    atl_lines[0] = f"ScoringFX_{clean_nm}.png"
+    with open(os.path.join(pkg_dir, f"ScoringFX_{clean_nm}.atlas"), "w", encoding="utf-8", newline="\n") as fh:
+        fh.write("\n".join(atl_lines) + "\n")
+
+    # catalog_item.json ('itemId' primera clave)
+    with open(os.path.join(pkg_dir, "catalog_item.json"), "w", encoding="utf-8", newline="\n") as fh:
+        fh.write(SW.build_catalog_item_json(clean_nm))
+
+    # SHA256SUMS.txt
+    ordered_files = [
+        f"ScoringFX_{clean_nm}.skel",
+        f"ScoringFX_{clean_nm}.atlas",
+        f"ScoringFX_{clean_nm}.png",
+        f"ScoringFX_Thumbnail_{clean_nm}.png",
+        "catalog_item.json",
+    ]
+    SW.write_sha256sums(pkg_dir, ordered_files)
+
+    # Crear ZIP con carpeta raiz ScoringFX_<Nombre>/
+    zip_path = os.path.join(target_root, f"ScoringFX_{clean_nm}_Spine.zip")
+    with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+        for fn in ordered_files + ["SHA256SUMS.txt"]:
+            zf.write(os.path.join(pkg_dir, fn), arcname=f"ScoringFX_{clean_nm}/{fn}")
+    return pkg_dir, zip_path
 
 # ======================= Construccion y Sincronizacion de Packs =======================
 def build_all():
+    import spine_writer as SW
+    import spine_to_lfx as SL
+
     fx_bank = load_real_fx_bank()
 
     # 1. Textos reales JD 2014-2016 + SUPER celeste claro
@@ -1093,13 +1120,22 @@ def build_all():
     ]
 
     for name, texts, anims, title, badge_rgb, grp in packs:
+        # Solo empaquetar las 7 palabras + las regiones FX realmente usadas por las 7 animaciones (100% regiones usadas!)
+        used_fx = sorted({
+            L["region"]
+            for A in anims.values()
+            for L in A.layers
+            if L["region"] in fx_bank
+        })
         at = Atlas(1024)
         for k, im in texts.items():
             at.add(k, im)
-        for k, im in fx_bank.items():
-            at.add(k, im)
+        for k in used_fx:
+            at.add(k, fx_bank[k])
         at.pack()
-        lfx = build_lfx(name, at, anims)
+
+        # Compilar esqueleto binario nativo Spine 4.0.64 (.skel) propio del tema!
+        skel_bytes = SW.compile_parametric_anims_to_skel(at.regs, anims, sample_fps=60.0)
 
         for base in (REPO_LIB, MOD_LIB):
             out_dir = os.path.join(base, name)
@@ -1109,19 +1145,36 @@ def build_all():
             atl_p = os.path.join(out_dir, f"ScoringFX_{name}.atlas")
             skl_p = os.path.join(out_dir, f"ScoringFX_{name}.skel")
             thm_p = os.path.join(out_dir, f"ScoringFX_Thumbnail_{name}.png")
+            cat_p = os.path.join(out_dir, "catalog_item.json")
 
             at.img.save(png_p)
-            with open(lfx_p, "w", encoding="utf-8") as fh:
-                json.dump(lfx, fh, separators=(",", ":"))
             al_lines = [f"ScoringFX_{name}.png", f"size:{at.size},{at.size}", "filter:Linear,Linear"]
             for rn, rr in at.regs.items():
                 al_lines += [rn, f"bounds:{rr['x']},{rr['y']},{rr['w']},{rr['h']}"]
-            with open(atl_p, "w", encoding="utf-8") as fh:
+            with open(atl_p, "w", encoding="utf-8", newline="\n") as fh:
                 fh.write("\n".join(al_lines) + "\n")
-            shutil.copy2(os.path.join(BASIC_DIR, "ScoringFX_Basic.skel"), skl_p)
+            with open(skl_p, "wb") as fh:
+                fh.write(skel_bytes)
+
+            # Hornear el .lfx.json DIRECTAMENTE decodificando nuestro .skel Spine 4.0.64 real (garantiza paridad 1:1!)
+            lfx, _ = SL.bake(skl_p, atl_p, name)
+            with open(lfx_p, "w", encoding="utf-8") as fh:
+                json.dump(lfx, fh, separators=(",", ":"))
 
             th = make_thumbnail(lfx_p, png_p, title, badge_rgb)
             th.save(thm_p)
+
+            with open(cat_p, "w", encoding="utf-8", newline="\n") as fh:
+                fh.write(SW.build_catalog_item_json(name))
+
+            SW.write_sha256sums(out_dir, [
+                f"ScoringFX_{name}.skel",
+                f"ScoringFX_{name}.atlas",
+                f"ScoringFX_{name}.png",
+                f"ScoringFX_Thumbnail_{name}.png",
+                "catalog_item.json",
+                f"{name}.lfx.json",
+            ])
 
             idx_p = os.path.join(base, "library_index.json")
             if os.path.exists(idx_p):
@@ -1137,8 +1190,21 @@ def build_all():
                 with open(idx_p, "w", encoding="utf-8") as fh:
                     json.dump(idx, fh, indent=2)
 
-        kb = os.path.getsize(os.path.join(REPO_LIB, name, f"{name}.lfx.json")) // 1024
-        print(f"[OK] {name:16} regions={len(at.regs):2d} lfx={kb:4d} KB")
+        skel_kb = os.path.getsize(os.path.join(REPO_LIB, name, f"ScoringFX_{name}.skel")) // 1024
+        lfx_kb = os.path.getsize(os.path.join(REPO_LIB, name, f"{name}.lfx.json")) // 1024
+        print(f"[OK] {name:16} regions={len(at.regs):2d} skel={skel_kb:3d} KB lfx={lfx_kb:4d} KB")
+
+    # Generar entregas oficiales listas para enviar al integrador de JDNext (tanto nombres limpios como _Custom)
+    entrega_dir = os.path.join(ROOT_MOD, r"ScoringFX\Entrega_JDNext_2026_10_30")
+    os.makedirs(entrega_dir, exist_ok=True)
+    for src_nm, deliv_nm in [
+        ("JD2014_2016", "JD2014_2016"),
+        ("JD4",         "JD4"),
+        ("JD2014_2016", "JD2014_2016_Custom"),
+        ("JD4",         "JD4_Custom"),
+    ]:
+        p_dir, z_path = export_jdnext_delivery_package(os.path.join(REPO_LIB, src_nm), src_nm, entrega_dir, deliv_nm)
+        print(f"[ENTREGA] {os.path.basename(p_dir)} -> {z_path}")
 
 if __name__ == "__main__":
     import sys

@@ -172,6 +172,7 @@ section.fold>*:not(h4){display:none}section.fold h4::after{content:'▸'}
     <div id="bar">
       <span>Fondo</span><select id="bgSel"><option value="dark">Oscuro</option><option value="jd">JD arena</option><option value="check">Transparente</option><option value="black">Negro</option><option value="white">Blanco</option></select>
       <label><input type="checkbox" id="gChk" checked> Guías</label>
+      <label title="Simula exactamente JDSpineMesh en UI Toolkit de Just Dance Next (solo mezcla alfa normal, sin aditivo)"><input type="checkbox" id="jdnBlendChk" checked> Modo JDNext (Alfa Normal)</label>
       <span style="flex:1"></span>
       <span>Zoom</span><input id="zoom" type="range" min="0.3" max="2.5" step="0.05" value="1" style="width:110px"><span id="zLab" class="v" style="color:var(--ac)">100%</span>
       <button class="sm" id="zReset">Reset</button><button class="sm" id="snap">📷 PNG</button>
@@ -191,7 +192,7 @@ section.fold>*:not(h4){display:none}section.fold h4::after{content:'▸'}
   <aside id="right"><section id="insp"></section></aside>
 </div>
 
-<div class="modal" id="expModal"><div class="card" style="width:720px">
+<div class="modal" id="expModal"><div class="card" style="width:740px">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
     <h3 style="margin:0;display:flex;align-items:center;gap:8px">
       <span style="color:var(--ac)">📦</span> Exportar ScoringFX
@@ -200,48 +201,46 @@ section.fold>*:not(h4){display:none}section.fold h4::after{content:'▸'}
   </div>
   
   <div class="tabs" style="margin-bottom:12px">
-    <button id="tabBtnUnity" class="on" style="font-weight:700">🎮 Paquete Unity (Recomendado)</button>
-    <button id="tabBtnSpine">🦴 Spine / JD Next (StreamingAssets)</button>
+    <button id="tabBtnSpine" class="on" style="font-weight:700">🦴 Spine 4.0.64 / JD Next (Recomendado)</button>
+    <button id="tabBtnUnity">🎮 Unity Standalone (LiamFX C#)</button>
     <button id="tabBtnLoose">📄 Archivos Sueltos</button>
   </div>
-  
-  <!-- Panel Unity -->
-  <div id="paneUnity" class="opt tab-pane on" style="border-color:var(--ac);background:rgba(34,211,238,.04)">
+
+  <!-- Panel Spine (Principal para Just Dance Next) -->
+  <div id="paneSpine" class="opt tab-pane on" style="border-color:var(--ac);background:rgba(34,211,238,.04)">
     <div style="display:flex;justify-content:space-between;align-items:center">
-      <b style="font-size:13px;color:var(--ac)">🎮 Paquete Completo para Unity</b>
-      <span class="badge u">Plug & Play (C# + Shaders)</span>
+      <b style="font-size:13px;color:var(--ac)">🦴 Paquete Oficial Spine 4.0.64 para Just Dance Next</b>
+      <span class="badge s">Spine 4.0.64 · UI Toolkit Alfa Normal</span>
     </div>
     <p style="color:var(--tx);font-size:11.5px;margin:6px 0">
-      Exporta la carpeta estructurada lista para colocar en la carpeta <code>Assets/</code> de tu proyecto Unity.
-      Incluye la animación a 60 FPS (<code>.lfx.json</code>), texturas atlas PNG, shaders transparentes/aditivos y componentes C# (<code>LiamFXPlayer</code> y <code>LiamFXCanvasGraphic</code>).
+      Compila un binario nativo <code>ScoringFX_&lt;Nombre&gt;.skel</code> (Spine 4.0.64) con tus 7 animaciones, textos, tintes y partículas personalizadas, re-empaca solo las regiones usadas en un atlas RGBA de 8 bits, e incluye miniatura 256×256, <code>catalog_item.json</code> y <code>SHA256SUMS.txt</code>.
     </p>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0">
-      <button class="ok" id="exUnity" style="padding:7px 14px;font-size:12px;font-weight:700">📦 Descargar ZIP Unity</button>
-      <button class="pri" id="exUnityDirect" style="padding:7px 14px;font-size:12px;font-weight:700">📂 Guardar en Carpeta Assets de Unity…</button>
-      <button class="btn" id="copyCSharp" style="padding:7px 12px;font-size:12px">📋 Copiar Código C#</button>
+    <div style="margin:8px 0;padding:8px 10px;background:var(--p3);border:1px solid var(--bd);border-radius:6px;font-size:11px"><span id="skelState" style="color:var(--ok)"></span></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0">
+      <button class="ok" id="exSpine" style="padding:7px 14px;font-size:12px;font-weight:700">📦 Descargar ZIP Spine 4.0.64 (JD Next)</button>
+      <button class="pri" id="exSpineDirect" style="padding:7px 14px;font-size:12px;font-weight:700">📂 Guardar Carpeta Spine Directa…</button>
+      <button class="btn" id="copyCatalogBtn" style="padding:7px 12px;font-size:12px">📋 Copiar catalog_item.json</button>
     </div>
-    <div class="hint" style="background:var(--p3);padding:10px;border-radius:6px;border:1px solid var(--bd);line-height:1.45">
-      <b>🚀 3 Pasos para usarlo en Unity:</b><br>
-      1. Extrae el ZIP dentro de la carpeta <code>Assets/</code> de tu proyecto Unity.<br>
-      2. Abre el menú <b>Window &gt; Liam &gt; Scoring FX Studio Review</b> para previsualizar los 6 feedbacks en tiempo real.<br>
-      3. Añade <code>LiamFXPlayer</code> (en 3D) o <code>LiamFXCanvasGraphic</code> (en UI Canvas) y llama a <code>player.Play(ScoringFeedbackType.Perfect);</code>.
+    <div style="margin-top:8px">
+      <label class="hint"><code>catalog_item.json</code> (con <code>"itemId"</code> estrictamente como primera clave para <code>catalog_items.json</code>):</label>
+      <textarea id="catOut" readonly rows="6" style="width:100%;background:var(--p2);color:var(--tx);border:1px solid var(--bd);border-radius:6px;font:10px Consolas,monospace;margin-top:4px"></textarea>
     </div>
   </div>
-
-  <!-- Panel Spine -->
-  <div id="paneSpine" class="opt tab-pane">
+  
+  <!-- Panel Unity Standalone -->
+  <div id="paneUnity" class="opt tab-pane">
     <div style="display:flex;justify-content:space-between;align-items:center">
-      <b style="font-size:13px;color:var(--warn)">🦴 Modding Spine / Just Dance Next</b>
-      <span class="badge s">StreamingAssets</span>
+      <b style="font-size:13px;color:var(--warn)">🎮 Paquete Standalone para Proyectos Unity Propios (LiamFX)</b>
+      <span class="badge u">LiamFX C# + Shaders</span>
     </div>
     <p style="color:var(--tx);font-size:11.5px;margin:6px 0">
-      Genera el paquete con el archivo binario <code>.skel</code> original de Spine 4.0 y el atlas PNG repintado para inyección directa en el juego.
+      Para proyectos Unity independientes (no JDNext, ya que JDNext usa exclusivamente Spine 4.0.64 en UI Toolkit).
+      Incluye animación horneada a 60 FPS (<code>.lfx.json</code>), atlas PNG, shaders y reproductor C# (<code>LiamFXPlayer</code>).
     </p>
-    <div style="margin:8px 0"><span id="skelState"></span></div>
-    <button class="pri" id="exSpine" style="padding:6px 14px">Descargar ZIP Spine</button>
-    <div style="margin-top:10px">
-      <label class="hint">Fragmento para <code>scoring_fx_definitions.json</code>:</label>
-      <textarea id="catOut" readonly rows="5" style="width:100%;background:var(--p2);color:var(--tx);border:1px solid var(--bd);border-radius:6px;font:10px Consolas,monospace;margin-top:4px"></textarea>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0">
+      <button class="ok" id="exUnity" style="padding:7px 14px;font-size:12px;font-weight:700">📦 Descargar ZIP Unity (LiamFX)</button>
+      <button class="pri" id="exUnityDirect" style="padding:7px 14px;font-size:12px;font-weight:700">📂 Guardar en Carpeta Assets de Unity…</button>
+      <button class="btn" id="copyCSharp" style="padding:7px 12px;font-size:12px">📋 Copiar Código C#</button>
     </div>
   </div>
 
@@ -531,10 +530,11 @@ const GLR={
     if(!B)return 0;
     const z=App.cam.zoom*dpr;gl.uniform2f(this.loc.uS,2*z/W,2*z/H);gl.uniform2f(this.loc.uO,2*App.cam.x*dpr/W,-2*App.cam.y*dpr/H);
     let order=B.draw[0][1];for(const d of B.draw){if(d[0]<=t+1e-9)order=d[1];else break}
+    const forceNormal=!$('#jdnBlendChk')||$('#jdnBlendChk').checked;
     let n=0,curKey=null,start=0,drawn=0;const flush=()=>{
       if(n===start)return;const[pg,bl]=curKey.split('|');
       gl.bindTexture(gl.TEXTURE_2D,this.tex[+pg]);
-      if(bl==='additive')gl.blendFuncSeparate(gl.ONE,gl.ONE,gl.ZERO,gl.ONE);else gl.blendFunc(gl.ONE,gl.ONE_MINUS_SRC_ALPHA);
+      if(bl==='additive'&&!forceNormal)gl.blendFuncSeparate(gl.ONE,gl.ONE,gl.ZERO,gl.ONE);else gl.blendFunc(gl.ONE,gl.ONE_MINUS_SRC_ALPHA);
       gl.bindBuffer(gl.ARRAY_BUFFER,this.buf);gl.bufferData(gl.ARRAY_BUFFER,this.vb.subarray(start*8,n*8),gl.DYNAMIC_DRAW);
       const L=this.loc;gl.enableVertexAttribArray(L.aP);gl.vertexAttribPointer(L.aP,2,gl.FLOAT,false,32,0);
       gl.enableVertexAttribArray(L.aU);gl.vertexAttribPointer(L.aU,2,gl.FLOAT,false,32,8);gl.enableVertexAttribArray(L.aC);gl.vertexAttribPointer(L.aC,4,gl.FLOAT,false,32,16);
@@ -542,7 +542,7 @@ const GLR={
     };
     for(const s of order){
       const tr=B.bySlot[s];if(!tr)continue;const sm=srcSample(tr.frames,t);if(!sm)continue;
-      const att=B.atts[sm.att];if(!att)continue;const key=att.page+'|'+tr.blend;
+      const att=B.atts[sm.att];if(!att)continue;const key=att.page+'|'+(forceNormal?'normal':tr.blend);
       if(key!==curKey){flush();curKey=key;start=n=n}
       for(let k=0;k<att.tris.length;k++){
         if((n+1)*8>this.vb.length){flush();const nb=new Float32Array(this.vb.length*2);nb.set(this.vb);this.vb=nb}
@@ -847,16 +847,16 @@ function inspRegion(p,n){
     UI.btn(p,'Colores como el original',()=>{const d=defaultText(n);Object.assign(o.text,{fillTop:d.fillTop,fillBottom:d.fillBottom,strokeColor:d.strokeColor,glowColor:d.glowColor,strokeW:d.strokeW,glowBlur:d.glowBlur});buildInspector();touch(true)});
   }
   UI.range(p,'Hue',o,'hue',-180,180,1,()=>{buildRegionList()},true);
-  UI.title(p,'<br>Solo Unity (LiamFX)','<span class="badge u">Unity</span>');
+  UI.title(p,'<br>Color, Escala y Visibilidad','<span class="badge s">Spine JDNext</span><span class="badge u">Unity</span>');
   UI.color(p,'Tinte',o,'tint');UI.range(p,'Opacidad',o,'alpha',0,1.5,.05);UI.range(p,'Escala',o,'scale',.2,3,.05);
-  UI.select(p,'Mezcla',o,'blend',[['','Original'],['normal','Normal'],['additive','Aditivo']]);UI.check(p,'Ocultar',o,'hidden');
+  UI.select(p,'Mezcla',o,'blend',[['','Original'],['normal','Normal (JDNext UI Toolkit)'],['additive','Aditivo (Solo Unity LiamFX)']]);UI.check(p,'Ocultar',o,'hidden');
   UI.btn(p,'Restablecer región',()=>{delete App.regionOv[n];buildInspector();buildRegionList();touch(true)},'dng');
 }
-const EX_COMMON=()=>({anims:[App.anim],texId:Object.keys(App.texLib)[0]||null,ox:0,oy:0,additive:true,behind:false});
+const EX_COMMON=()=>({anims:[App.anim],texId:Object.keys(App.texLib)[0]||null,ox:0,oy:0,additive:false,behind:false});
 function newEmitter(){return Object.assign(EX_COMMON(),{id:'e'+App.exSeq++,type:'emitter',name:'Partículas '+App.exSeq,count:28,delay:0,spawn:120,life:520,lifeJit:.4,spdA:140,spdB:380,angA:0,angB:360,radius:30,grav:-60,drag:1.4,szA:46,szB:0,sizeJit:.4,rot:0,rotRand:360,rotA:-120,rotB:120,colA:'#ffffff',colB:'#ffffff',alpha:1,fadeIn:.08,fadeOut:.5,seed:7})}
 function newBg(){return Object.assign(EX_COMMON(),{id:'e'+App.exSeq++,type:'bg',name:'Fondo '+App.exSeq,w:520,sy:1,s0:.2,ease:'outBack',intro:200,exit:170,exitScale:1.25,spin:0,pulse:.02,pulseHz:2,tint:'#ffffff',alpha:.9,behind:true,additive:false})}
 function inspExtra(p,ex){
-  UI.title(p,(ex.type==='emitter'?'✨ ':'🖼 ')+ex.name,'<span class="badge u">Unity</span>');
+  UI.title(p,(ex.type==='emitter'?'✨ ':'🖼 ')+ex.name,'<span class="badge s">Spine JDNext</span><span class="badge u">Unity</span>');
   UI.text(p,'Nombre',ex,'name',()=>buildExList());
   UI.hint(p,'Textura:');UI.texPicker(p,ex.texId,id=>{ex.texId=id;touch(true);buildInspector()});
   UI.hint(p,'Aplicar en:');const w=document.createElement('div');w.className='tabs';w.style.marginBottom='6px';
@@ -921,8 +921,571 @@ function zip(files){
   let cs=0;cen.forEach(a=>cs+=a.length);const e=new DataView(new ArrayBuffer(22));e.setUint32(0,0x06054b50,true);e.setUint16(8,files.length,true);e.setUint16(10,files.length,true);e.setUint32(12,cs,true);e.setUint32(16,off,true);
   return new Blob([...parts,...cen,new Uint8Array(e.buffer)],{type:'application/zip'});
 }
-const baseName=()=>($('#nameIn').value.trim()||'ScoringFX_Custom').replace(/[^\w\-]/g,'_');
+function cleanFxName(raw){
+  let n=(raw||'').trim().replace(/[^\w\-]/g,'_').replace(/_+/g,'_').replace(/^_+|_+$/g,'');
+  while(/^ScoringFX_/i.test(n))n=n.replace(/^ScoringFX_/i,'');
+  while(/_SkeletonData$/i.test(n))n=n.replace(/_SkeletonData$/i,'');
+  return n||'Custom';
+}
+const fxCleanName=()=>cleanFxName($('#nameIn').value);
+const baseName=()=>'ScoringFX_'+fxCleanName();
 const pageFiles=n=>App.pages.map((_,i)=>n+(i?'_'+(i+1):'')+'.png');
+
+/* ====================== SHA-256 puro JS (funciona en file://, http://, https:// y Node) ====================== */
+const SHA256_K=new Uint32Array([
+  0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
+  0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
+  0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,
+  0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,
+  0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,
+  0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,
+  0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,
+  0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2
+]);
+function sha256Bytes(data){
+  const msg=data instanceof Uint8Array?data:new TextEncoder().encode(String(data));
+  const len=msg.length,bitHi=Math.floor((len*8)/0x100000000),bitLo=(len*8)>>>0;
+  const padLen=((len+9+63)&~63),buf=new Uint8Array(padLen),dv=new DataView(buf.buffer);
+  buf.set(msg);buf[len]=0x80;dv.setUint32(padLen-8,bitHi,false);dv.setUint32(padLen-4,bitLo,false);
+  let h0=0x6a09e667,h1=0xbb67ae85,h2=0x3c6ef372,h3=0xa54ff53a,h4=0x510e527f,h5=0x9b05688c,h6=0x1f83d9ab,h7=0x5be0cd19;
+  const W=new Uint32Array(64),rotr=(x,n)=>(x>>>n)|(x<<(32-n));
+  for(let off=0;off<padLen;off+=64){
+    for(let i=0;i<16;i++)W[i]=dv.getUint32(off+i*4,false);
+    for(let i=16;i<64;i++){
+      const s0=rotr(W[i-15],7)^rotr(W[i-15],18)^(W[i-15]>>>3);
+      const s1=rotr(W[i-2],17)^rotr(W[i-2],19)^(W[i-2]>>>10);
+      W[i]=(W[i-16]+s0+W[i-7]+s1)>>>0;
+    }
+    let a=h0,b=h1,c=h2,d=h3,e=h4,f=h5,g=h6,h=h7;
+    for(let i=0;i<64;i++){
+      const S1=rotr(e,6)^rotr(e,11)^rotr(e,25),ch=(e&f)^((~e)&g),t1=(h+S1+ch+SHA256_K[i]+W[i])>>>0;
+      const S0=rotr(a,2)^rotr(a,13)^rotr(a,22),maj=(a&b)^(a&c)^(b&c),t2=(S0+maj)>>>0;
+      h=g;g=f;f=e;e=(d+t1)>>>0;d=c;c=b;b=a;a=(t1+t2)>>>0;
+    }
+    h0=(h0+a)>>>0;h1=(h1+b)>>>0;h2=(h2+c)>>>0;h3=(h3+d)>>>0;h4=(h4+e)>>>0;h5=(h5+f)>>>0;h6=(h6+g)>>>0;h7=(h7+h)>>>0;
+  }
+  const out=new Uint8Array(32),odv=new DataView(out.buffer);
+  [h0,h1,h2,h3,h4,h5,h6,h7].forEach((v,i)=>odv.setUint32(i*4,v,false));
+  return out;
+}
+function sha256Hex(data){return Array.from(sha256Bytes(data)).map(b=>b.toString(16).padStart(2,'0')).join('')}
+
+/* ====================== catalog_item.json oficial JDNext (itemId estrictamente primera clave) ====================== */
+function catalogItemJson(rawName){
+  const name=cleanFxName(rawName);
+  const h=sha256Bytes('JDNext_ScoringFX_'+name).slice(0,16);
+  h[6]=(h[6]&0x0f)|0x40;h[8]=(h[8]&0x3f)|0x80;
+  const hx=Array.from(h).map(b=>b.toString(16).padStart(2,'0')).join('');
+  const guid=`${hx.slice(0,8)}-${hx.slice(8,12)}-${hx.slice(12,16)}-${hx.slice(16,20)}-${hx.slice(20,32)}`;
+  const locId=905000000+(((h[0]<<24)|(h[1]<<16)|(h[2]<<8)|h[3])>>>0)%899999;
+  const entry={
+    itemId:guid,
+    type:'scoringFx',
+    maximumQuantity:1,
+    nameId:name,
+    tags:[],
+    assets:{},
+    localizations:{},
+    obj:{
+      nameLocId:locId,
+      rarity:0,
+      assetAddress:`Assets/Data/Spine/ScoringFXs/${name}/ScoringFX_${name}_SkeletonData.asset`,
+      thumbnailAddress:`Assets/Data/Textures/Thumbnails/ScoringFXs/ScoringFX_Thumbnail_${name}.psd`,
+      isPremium:false,
+      isUbiconnect:false,
+      hiddenUntilUnlocked:false,
+      isSeasonal:false,
+      unlockConditionsLocId:0
+    }
+  };
+  return JSON.stringify(entry,null,2)+'\n';
+}
+
+/* ====================== Compilador Nativo JS Spine 4.0.64 Binario (.skel) ====================== */
+const SPINE_REQ_ANIMS=['Bad','Ok','Good','Super','Perfect','Gold','GoldMiss'];
+const SPINE_STD_WORDS=['PERFECT','SUPER','GOOD','OK','MISS','GOLDMISS','YEAH'];
+
+class SpineBinWriter{
+  constructor(){this.buf=[];this._tmp=new ArrayBuffer(4);this._dv=new DataView(this._tmp);this._enc=new TextEncoder()}
+  byte(b){this.buf.push(b&0xff)}
+  boolean(v){this.buf.push(v?1:0)}
+  f32(v){this._dv.setFloat32(0,+v,false);const a=new Uint8Array(this._tmp);this.buf.push(a[0],a[1],a[2],a[3])}
+  i32(v){this._dv.setInt32(0,v|0,false);const a=new Uint8Array(this._tmp);this.buf.push(a[0],a[1],a[2],a[3])}
+  u32(v){this._dv.setUint32(0,v>>>0,false);const a=new Uint8Array(this._tmp);this.buf.push(a[0],a[1],a[2],a[3])}
+  u16(v){this._dv.setUint16(0,v&0xffff,false);const a=new Uint8Array(this._tmp);this.buf.push(a[0],a[1])}
+  varint(val,optimizePositive=true){
+    let v=val|0;if(!optimizePositive)v=(v<<1)^(v>>31);v=v>>>0;
+    while(true){const b=v&0x7f;v>>>=7;if(v)this.buf.push(b|0x80);else{this.buf.push(b);break}}
+  }
+  string(s){
+    if(s===null||s===undefined){this.varint(0,true);return}
+    if(s===''){this.varint(1,true);return}
+    const raw=this._enc.encode(s);this.varint(raw.length+1,true);
+    for(let i=0;i<raw.length;i++)this.buf.push(raw[i]);
+  }
+  toUint8Array(){return new Uint8Array(this.buf)}
+}
+
+function rdpSimplify(frames,tol,distFn){
+  if(frames.length<=2)return frames;
+  const keep=new Uint8Array(frames.length);keep[0]=1;keep[frames.length-1]=1;
+  const rec=(i0,i1)=>{
+    if(i1-i0<=1)return;
+    const t0=frames[i0][0],v0=frames[i0][1],t1=frames[i1][0],v1=frames[i1][1],dt=Math.max(1e-9,t1-t0);
+    let maxD=-1,bestI=-1;
+    for(let i=i0+1;i<i1;i++){
+      const u=(frames[i][0]-t0)/dt,d=distFn(frames[i][1],v0,v1,u);
+      if(d>maxD){maxD=d;bestI=i}
+    }
+    if(maxD>tol&&bestI>0){keep[bestI]=1;rec(i0,bestI);rec(bestI,i1)}
+  };
+  rec(0,frames.length-1);
+  return frames.filter((_,i)=>keep[i]);
+}
+const simp1D=(fr,tol=.18)=>rdpSimplify(fr,tol,(vi,v0,v1,u)=>Math.abs(vi-(v0+(v1-v0)*u)));
+const simp2D=(fr,tol=.25)=>rdpSimplify(fr,tol,(vi,v0,v1,u)=>Math.hypot(vi[0]-(v0[0]+(v1[0]-v0[0])*u),vi[1]-(v0[1]+(v1[1]-v0[1])*u)));
+const simpRGBA=(fr,tol=.009)=>rdpSimplify(fr,tol,(vi,v0,v1,u)=>Math.max(
+  Math.abs(vi[0]-(v0[0]+(v1[0]-v0[0])*u)),Math.abs(vi[1]-(v0[1]+(v1[1]-v0[1])*u)),
+  Math.abs(vi[2]-(v0[2]+(v1[2]-v0[2])*u)),Math.abs(vi[3]-(v0[3]+(v1[3]-v0[3])*u))
+));
+const simpVerts=(fr,tol=.4)=>rdpSimplify(fr,tol,(vi,v0,v1,u)=>{
+  let m=0;for(let k=0;k<vi.length;k++){const d=Math.abs(vi[k]-(v0[k]+(v1[k]-v0[k])*u));if(d>m)m=d}return m;
+});
+
+function tryDecomposeQuadTRS(visFrames){
+  // Verifica si una pista de 1 solo quad (nv===4) se puede representar exactamente con Bone translate+rotate+scale
+  let ref=null,bestArea=-1;
+  for(const f of visFrames){
+    if(f.length!==14)return null;
+    const lenA=Math.hypot(f[8]-f[6],f[9]-f[7]),lenB=Math.hypot(f[10]-f[8],f[11]-f[9]);
+    const area=lenA*lenB;if(area>bestArea){bestArea=area;ref=f}
+  }
+  if(!ref||bestArea<4)return null;
+  const v0=ref.slice(6);
+  const cx0=.25*(v0[0]+v0[2]+v0[4]+v0[6]),cy0=.25*(v0[1]+v0[3]+v0[5]+v0[7]);
+  const eAx=v0[2]-v0[0],eAy=v0[3]-v0[1],lenA0=Math.hypot(eAx,eAy);
+  const eBx=v0[4]-v0[2],eBy=v0[5]-v0[3],lenB0=Math.hypot(eBx,eBy);
+  if(lenA0<1||lenB0<1)return null;
+  if(Math.hypot((v0[0]+v0[4])-(v0[2]+v0[6]),(v0[1]+v0[5])-(v0[3]+v0[7]))>1.2)return null;
+  if(Math.abs(eAx*eBx+eAy*eBy)/(lenA0*lenB0)>.035)return null;
+  const ux0=eAx/lenA0,uy0=eAy/lenA0,vx0=-uy0,vy0=ux0;
+  const projB0=eBx*vx0+eBy*vy0;
+  if(Math.abs(projB0)<1)return null;
+  const setupVerts=[];
+  for(let i=0;i<4;i++){
+    const dx=v0[i*2]-cx0,dy=v0[i*2+1]-cy0;
+    setupVerts.push(dx*ux0+dy*uy0,dx*vx0+dy*vy0);
+  }
+  const trRaw=[],rotRaw=[],scRaw=[];
+  let prevDeg=Math.atan2(uy0,ux0)*180/Math.PI;
+  for(const f of visFrames){
+    const t=f[0],v=f.slice(6);
+    const cx=.25*(v[0]+v[2]+v[4]+v[6]),cy=.25*(v[1]+v[3]+v[5]+v[7]);
+    const ax=v[2]-v[0],ay=v[3]-v[1],lenA=Math.hypot(ax,ay);
+    const bx=v[4]-v[2],by=v[5]-v[3];
+    let deg=prevDeg,sx=0,sy=0;
+    if(lenA>1e-3){
+      const ux=ax/lenA,uy=ay/lenA;
+      deg=Math.atan2(uy,ux)*180/Math.PI;
+      while(deg-prevDeg>180)deg-=360;
+      while(deg-prevDeg<-180)deg+=360;
+      prevDeg=deg;
+      sx=lenA/lenA0;
+      sy=(bx*(-uy)+by*ux)/projB0;
+    }
+    const rad=deg*Math.PI/180,cs=Math.cos(rad),sn=Math.sin(rad);
+    for(let i=0;i<4;i++){
+      const lx=setupVerts[i*2]*sx,ly=setupVerts[i*2+1]*sy;
+      const wx=cx+lx*cs-ly*sn,wy=cy+lx*sn+ly*cs;
+      if(Math.hypot(wx-v[i*2],wy-v[i*2+1])>1.35)return null;
+    }
+    trRaw.push([t,[cx,cy]]);rotRaw.push([t,deg]);scRaw.push([t,[sx,sy]]);
+  }
+  return{setupVerts,w:lenA0,h:Math.abs(projB0),tr:simp2D(trRaw,.24),rot:simp1D(rotRaw,.18),sc:simp2D(scRaw,.006)};
+}
+
+function serializeSpine40SkelJS(bones,slots,skinAttachments,animations,version='4.0.64',fps=60){
+  const strSet=[],strMap=new Map();
+  const intern=s=>{
+    if(s===null||s===undefined)return 0;
+    if(!strMap.has(s)){strMap.set(s,strSet.length+1);strSet.push(s)}
+    return strMap.get(s);
+  };
+  const slotKeys=Object.keys(skinAttachments).map(Number).sort((a,b)=>a-b);
+  for(const si of slotKeys){
+    for(const[ak,att]of Object.entries(skinAttachments[si])){
+      intern(ak);
+      if(att.name&&att.name!==ak)intern(att.name);
+      if(att.path)intern(att.path);
+    }
+  }
+  for(const an of SPINE_REQ_ANIMS){
+    const A=animations[an];if(!A)continue;
+    for(const stl of Object.values(A.slots||{}))for(const[,aname]of(stl.attachment||[]))if(aname!==null)intern(aname);
+    for(const d of Object.values(A.deform||{}))intern(d.ak);
+  }
+  const body=new SpineBinWriter();
+  body.string(version);
+  body.f32(0);body.f32(0);body.f32(0);body.f32(0);
+  body.boolean(true); // nonessential = true
+  body.f32(fps);body.string('./images/');body.string('');
+  body.varint(strSet.length,true);for(const s of strSet)body.string(s);
+
+  // Bones
+  body.varint(bones.length,true);
+  for(let i=0;i<bones.length;i++){
+    const b=bones[i];body.string(b.name);
+    if(i>0)body.varint(b.parent,true);
+    body.f32(b.rot||0);body.f32(b.x||0);body.f32(b.y||0);body.f32(b.sx??1);body.f32(b.sy??1);
+    body.f32(0);body.f32(0);body.f32(0);body.varint(0,true);body.boolean(false);body.u32(0x9b9b9bff);
+  }
+  // Slots (Setup Pose 100% limpia: attachmentName = null -> varint 0)
+  body.varint(slots.length,true);
+  for(const s of slots){
+    body.string(s.name);body.varint(s.bone,true);body.u32(0xffffffff);body.i32(-1);body.varint(0,true);body.varint(s.blend||0,true);
+  }
+  // IK, Transform, Path constraints = 0
+  body.varint(0,true);body.varint(0,true);body.varint(0,true);
+
+  // Default Skin
+  const activeSlots=slotKeys.filter(si=>Object.keys(skinAttachments[si]).length>0);
+  body.varint(activeSlots.length,true);
+  for(const si of activeSlots){
+    const atts=skinAttachments[si], entries=Object.entries(atts);
+    body.varint(si,true);body.varint(entries.length,true);
+    for(const[ak,att]of entries){
+      body.varint(intern(ak),true);
+      const attName=att.name||ak;
+      body.varint(attName!==ak?intern(attName):0,true);
+      body.byte(2); // AttachmentType.Mesh = 2
+      body.varint(intern(att.path||attName),true);
+      body.u32(0xffffffff);
+      const vcount=att.verts.length>>1;
+      body.varint(vcount,true);
+      for(const uv of att.uvs)body.f32(uv);
+      body.varint(att.tris.length,true);
+      for(const tr of att.tris)body.u16(tr);
+      body.boolean(false); // unweighted
+      for(const vx of att.verts)body.f32(vx);
+      body.varint(vcount,true); // hullLength
+      const edges=vcount===4?[0,2,2,4,4,6,6,0]:[];
+      body.varint(edges.length,true);for(const eg of edges)body.u16(eg);
+      body.f32(att.w||100);body.f32(att.h||100);
+    }
+  }
+  // Other skins = 0, Events = 0
+  body.varint(0,true);body.varint(0,true);
+
+  // Animations
+  const animOrder=SPINE_REQ_ANIMS.filter(a=>animations[a]);
+  body.varint(animOrder.length,true);
+  for(const an of animOrder){
+    const A=animations[an];
+    const sIds=Object.keys(A.slots||{}).map(Number).filter(k=>Object.keys(A.slots[k]).length>0).sort((a,b)=>a-b);
+    const bIds=Object.keys(A.bones||{}).map(Number).filter(k=>Object.keys(A.bones[k]).length>0).sort((a,b)=>a-b);
+    const defList=Object.values(A.deform||{}).filter(d=>d.frames&&d.frames.length>0);
+    let totalTl=defList.length;
+    for(const si of sIds)totalTl+=Object.keys(A.slots[si]).length;
+    for(const bi of bIds)totalTl+=Object.keys(A.bones[bi]).length;
+    body.string(an);body.varint(totalTl,true);
+
+    // 1. Slot timelines
+    body.varint(sIds.length,true);
+    for(const si of sIds){
+      const d=A.slots[si];
+      body.varint(si,true);body.varint(Object.keys(d).length,true);
+      if(d.attachment){
+        const fr=d.attachment;body.byte(0);body.varint(fr.length,true);
+        for(const[t,aname]of fr){body.f32(t);body.varint(intern(aname),true)}
+      }
+      if(d.rgba){
+        const fr=d.rgba;body.byte(1);body.varint(fr.length,true);body.varint(0,true);
+        for(let i=0;i<fr.length;i++){
+          const[t,c]=fr[i];body.f32(t);
+          body.byte(clamp(Math.round(c[0]*255),0,255));body.byte(clamp(Math.round(c[1]*255),0,255));
+          body.byte(clamp(Math.round(c[2]*255),0,255));body.byte(clamp(Math.round(c[3]*255),0,255));
+          if(i>0)body.byte(fr[i-1][2]==='stepped'?1:0);
+        }
+      }
+    }
+    // 2. Bone timelines
+    body.varint(bIds.length,true);
+    for(const bi of bIds){
+      const d=A.bones[bi];
+      body.varint(bi,true);body.varint(Object.keys(d).length,true);
+      if(d.rotate){
+        const fr=d.rotate;body.byte(0);body.varint(fr.length,true);body.varint(0,true);
+        for(let i=0;i<fr.length;i++){body.f32(fr[i][0]);body.f32(fr[i][1]);if(i>0)body.byte(fr[i-1][2]==='stepped'?1:0)}
+      }
+      if(d.translate){
+        const fr=d.translate;body.byte(1);body.varint(fr.length,true);body.varint(0,true);
+        for(let i=0;i<fr.length;i++){body.f32(fr[i][0]);body.f32(fr[i][1][0]);body.f32(fr[i][1][1]);if(i>0)body.byte(fr[i-1][2]==='stepped'?1:0)}
+      }
+      if(d.scale){
+        const fr=d.scale;body.byte(4);body.varint(fr.length,true);body.varint(0,true);
+        for(let i=0;i<fr.length;i++){body.f32(fr[i][0]);body.f32(fr[i][1][0]);body.f32(fr[i][1][1]);if(i>0)body.byte(fr[i-1][2]==='stepped'?1:0)}
+      }
+    }
+    // 3. IK, Transform, Path = 0
+    body.varint(0,true);body.varint(0,true);body.varint(0,true);
+    // 4. Deform timelines
+    if(!defList.length){body.varint(0,true)}
+    else{
+      body.varint(1,true);body.varint(0,true); // default skin = 0
+      const bySlot=new Map();
+      for(const d of defList){if(!bySlot.has(d.si))bySlot.set(d.si,[]);bySlot.get(d.si).push(d)}
+      const dsIds=Array.from(bySlot.keys()).sort((a,b)=>a-b);
+      body.varint(dsIds.length,true);
+      for(const si of dsIds){
+        const items=bySlot.get(si);body.varint(si,true);body.varint(items.length,true);
+        for(const it of items){
+          const fr=it.frames;body.varint(intern(it.ak),true);body.varint(fr.length,true);body.varint(0,true);
+          body.f32(fr[0][0]);
+          for(let i=0;i<fr.length;i++){
+            const deltas=fr[i][1];let st=-1,en=-1;
+            for(let k=0;k<deltas.length;k++)if(Math.abs(deltas[k])>1e-4){if(st<0)st=k;en=k+1}
+            if(st<0)body.varint(0,true);
+            else{body.varint(en-st,true);body.varint(st,true);for(let k=st;k<en;k++)body.f32(deltas[k])}
+            if(i<fr.length-1){body.f32(fr[i+1][0]);body.byte(fr[i][2]==='stepped'?1:0)}
+          }
+        }
+      }
+    }
+    // 5. DrawOrder = 0, Events = 0
+    body.varint(0,true);body.varint(0,true);
+  }
+  const bodyBytes=body.toUint8Array();
+  const h8=sha256Bytes(bodyBytes).slice(0,8);
+  if(h8.every(b=>b===0))h8[7]=1;
+  const out=new Uint8Array(8+bodyBytes.length);
+  out.set(h8,0);out.set(bodyBytes,8);
+  return out;
+}
+
+function compileSpine40PackageJS(rawName){
+  const cleanName=cleanFxName(rawName),fullName='ScoringFX_'+cleanName;
+  if(App.pagesDirty)composePages();
+  const L=App.lfx;
+  const fallbackAnim=L.animations.Bad?'Bad':(L.animations.Perfect?'Perfect':Object.keys(L.animations)[0]);
+  const baked={};
+  for(const an of SPINE_REQ_ANIMS)baked[an]=bakeAnim(L.animations[an]?an:fallbackAnim);
+
+  // Recolectar pistas visibles en orden back-to-front e identificar regiones realmente usadas
+  const usedRegCanvases=new Map(); // regName -> canvas
+  const aidMeta=new Map();         // aid -> {regName, attName, nv, localUvs, tris, rw, rh}
+  const regTracksByAnim={};
+
+  const ensureAidMeta=(aid,B)=>{
+    if(aidMeta.has(aid))return aidMeta.get(aid);
+    if(aid<L.attachments.length){
+      const oa=L.attachments[aid],regName=oa.region,rg=L.regions[regName],pg=L.pages[rg.page];
+      if(!usedRegCanvases.has(regName))usedRegCanvases.set(regName,makeRegionCanvas(regName,ovOf(regName)));
+      const localUvs=[];
+      for(let k=0;k<oa.nv;k++){
+        const up=oa.uvs[k*2],vp=oa.uvs[k*2+1];
+        let ul,vl;
+        if(rg.rotate){vl=(up*pg.w-rg.x)/rg.h;ul=1-(vp*pg.h-rg.y)/rg.w}
+        else{ul=(up*pg.w-rg.x)/rg.w;vl=(vp*pg.h-rg.y)/rg.h}
+        localUvs.push(clamp(ul,0,1),clamp(vl,0,1));
+      }
+      const m={regName,attName:oa.name||regName,nv:oa.nv,localUvs,tris:oa.tris.slice(),rw:rg.w,rh:rg.h};
+      aidMeta.set(aid,m);return m;
+    }else{
+      const ea=B.atts[aid],texId=ea.region.split('/')[1],p=App.extraInfo[texId],regName='extra_'+texId;
+      if(!usedRegCanvases.has(regName)){
+        const rc=mk(p.w,p.h),rx=rc.getContext('2d');rx.imageSmoothingQuality='high';
+        rx.drawImage(App.texLib[texId].canvas,0,0,p.w,p.h);usedRegCanvases.set(regName,rc);
+      }
+      const du=.5/Math.max(2,p.w),dv=.5/Math.max(2,p.h);
+      const localUvs=[du,1-dv,du,dv,1-du,dv,1-du,1-dv];
+      const m={regName,attName:regName,nv:4,localUvs,tris:[0,1,2,2,3,0],rw:p.w,rh:p.h};
+      aidMeta.set(aid,m);return m;
+    }
+  };
+
+  for(const an of SPINE_REQ_ANIMS){
+    const B=baked[an],order=B.draw&&B.draw.length?B.draw[0][1]:B.tracks.map(t=>t.slot);
+    const seen=new Set(),ordered=[];
+    for(const sl of order){const tr=B.bySlot[sl];if(tr&&!seen.has(tr)){seen.add(tr);ordered.push(tr)}}
+    for(const tr of B.tracks)if(!seen.has(tr)){seen.add(tr);ordered.push(tr)}
+    const visTracks=[];
+    for(const tr of ordered){
+      const hasVis=tr.frames.some(f=>f[1]>=0&&f[5]>.002);
+      if(!hasVis)continue;
+      for(const f of tr.frames)if(f[1]>=0)ensureAidMeta(f[1],B);
+      visTracks.push(tr);
+    }
+    regTracksByAnim[an]=visTracks;
+  }
+
+  // Asegurar las 7 regiones estandar de palabra si existen en la plantilla aunque el usuario haya ocultado alguna
+  for(const w of SPINE_STD_WORDS){
+    if(!usedRegCanvases.has(w)&&L.regions&&L.regions[w]){
+      usedRegCanvases.set(w,makeRegionCanvas(w,ovOf(w)));
+    }
+  }
+
+  // Empaquetar regiones usadas en un unico PNG RGBA 8-bit (1024x1024 o 2048x2048)
+  const packItems=Array.from(usedRegCanvases.entries()).map(([name,cv])=>({name,cv,w:cv.width,h:cv.height}));
+  packItems.sort((a,b)=>(b.h-a.h)||(b.w-a.w)||a.name.localeCompare(b.name));
+  let atlasCanvas=null,placed=null,atlasSize=1024;
+  for(const sz of[1024,2048,4096]){
+    let x=3,y=3,rowH=0,ok=true;const pl={};
+    for(const it of packItems){
+      if(x+it.w+3>sz){x=3;y+=rowH+3;rowH=0}
+      if(y+it.h+3>sz){ok=false;break}
+      pl[it.name]={x,y,w:it.w,h:it.h};
+      x+=it.w+3;rowH=Math.max(rowH,it.h);
+    }
+    if(ok){
+      atlasSize=sz;placed=pl;atlasCanvas=mk(sz,sz);
+      const cx=atlasCanvas.getContext('2d');
+      for(const it of packItems){const p=pl[it.name];cx.drawImage(it.cv,p.x,p.y)}
+      break;
+    }
+  }
+
+  let atlasText=`${fullName}.png\nsize:${atlasSize},${atlasSize}\nfilter:Linear,Linear\n`;
+  for(const it of packItems){
+    const p=placed[it.name];
+    atlasText+=`${it.name}\n  bounds:${p.x},${p.y},${p.w},${p.h}\n`;
+  }
+
+  // Construir huesos, slots, skin default y las 7 animaciones Spine 4.0.64
+  const bones=[{name:'root',parent:-1,x:0,y:0,rot:0,sx:1,sy:1}];
+  const slots=[];
+  const skinAttachments={};
+  const outAnims={};
+  const referencedRegions=new Set();
+
+  for(const an of SPINE_REQ_ANIMS){
+    const B=baked[an],visTracks=regTracksByAnim[an];
+    const aSlots={},aBones={},aDeform={};
+    let hasPerfectAnchor=false;
+
+    for(let li=0;li<visTracks.length;li++){
+      const tr=visTracks[li];
+      const distinctAids=[...new Set(tr.frames.filter(f=>f[1]>=0&&f[5]>.002).map(f=>f[1]))];
+      if(!distinctAids.length)continue;
+
+      const bi=bones.length,si=slots.length;
+      const m0=aidMeta.get(distinctAids[0]);
+      bones.push({name:`${an}_b${li}_${m0.regName}`,parent:0,x:0,y:0,rot:0,sx:1,sy:1});
+      // Mezcla normal (0) por defecto para coherencia total con JDSpineMesh en UI Toolkit
+      slots.push({name:`${an}_s${li}_${m0.regName}`,bone:bi,blend:0});
+      skinAttachments[si]={};
+
+      const visFrames=tr.frames.filter(f=>f[1]>=0&&f[5]>.002);
+      const trs=(distinctAids.length===1&&m0.nv===4)?tryDecomposeQuadTRS(visFrames):null;
+
+      // Mapear aid -> clave de attachment en este slot
+      const aidKeyMap=new Map();
+      const usedKeys=new Set();
+      for(const aid of distinctAids){
+        const m=aidMeta.get(aid);
+        referencedRegions.add(m.regName);
+        let ak=m.attName||m.regName;
+        if(usedKeys.has(ak))ak=`${ak}_${aid}`;
+        usedKeys.add(ak);aidKeyMap.set(aid,ak);
+        if(an==='Perfect'&&ak.toUpperCase()==='PERFECT')hasPerfectAnchor=true;
+      }
+
+      if(trs){
+        const ak=aidKeyMap.get(distinctAids[0]);
+        skinAttachments[si][ak]={
+          name:ak,path:m0.regName,uvs:m0.localUvs,tris:m0.tris,
+          verts:trs.setupVerts,w:trs.w,h:trs.h
+        };
+        const btl={};
+        if(trs.tr.some(([,xy])=>Math.abs(xy[0])>1e-3||Math.abs(xy[1])>1e-3))btl.translate=trs.tr.map(([t,xy])=>[t,xy,0]);
+        if(trs.rot.some(([,r])=>Math.abs(r)>1e-3))btl.rotate=trs.rot.map(([t,r])=>[t,r,0]);
+        if(trs.sc.some(([,s])=>Math.abs(s[0]-1)>1e-3||Math.abs(s[1]-1)>1e-3))btl.scale=trs.sc.map(([t,s])=>[t,s,0]);
+        if(Object.keys(btl).length)aBones[bi]=btl;
+      }else{
+        for(const aid of distinctAids){
+          const m=aidMeta.get(aid),ak=aidKeyMap.get(aid);
+          const sub=visFrames.filter(f=>f[1]===aid);
+          const setupV=sub[0].slice(6);
+          skinAttachments[si][ak]={
+            name:ak,path:m.regName,uvs:m.localUvs,tris:m.tris,
+            verts:setupV,w:m.rw,h:m.rh
+          };
+          const defRaw=sub.map(f=>[f[0],f.slice(6).map((v,k)=>v-setupV[k])]);
+          if(defRaw.some(([,dv])=>dv.some(x=>Math.abs(x)>.35))){
+            const simp=simpVerts(defRaw,.4);
+            aDeform[`${si}:${ak}`]={si,ak,frames:simp.map(([t,dv])=>[t,dv,0])};
+          }
+        }
+      }
+
+      // Lineas de tiempo de slot: attachment (stepped implicito) y rgba (con cierre limpio)
+      const attTl=[],colRaw=[];
+      let curAk=undefined;
+      for(let i=0;i<tr.frames.length;i++){
+        const f=tr.frames[i],t=f[0],vis=f[1]>=0&&f[5]>.002;
+        const ak=vis?aidKeyMap.get(f[1]):null;
+        if(ak!==curAk){
+          if(i===0&&ak===null)attTl.push([0,null]);
+          else if(i>0&&curAk===undefined&&ak!==null){attTl.push([0,null]);attTl.push([t,ak])}
+          else attTl.push([t,ak]);
+          curAk=ak;
+        }
+        if(vis)colRaw.push([t,[clamp(f[2],0,1),clamp(f[3],0,1),clamp(f[4],0,1),clamp(f[5],0,1)]]);
+      }
+      if(curAk!==null){
+        const tEnd=Math.min(B.duration,visFrames[visFrames.length-1][0]+.0005);
+        attTl.push([+tEnd.toFixed(4),null]);
+      }
+      const colSimp=simpRGBA(colRaw,.009);
+      aSlots[si]={attachment:attTl,rgba:colSimp.map(([t,c])=>[t,c,0])};
+    }
+
+    // Si en 'Perfect' el usuario renombro/reemplazo todo y no quedo ningun attachment llamado 'PERFECT',
+    // renombrar la ultima capa de texto principal a 'PERFECT' para mantener el ancla de 225px de JDNext.
+    if(an==='Perfect'&&!hasPerfectAnchor){
+      const sList=Object.keys(aSlots).map(Number).sort((a,b)=>b-a);
+      for(const si of sList){
+        const keys=Object.keys(skinAttachments[si]||{});
+        if(keys.length===1){
+          const oldK=keys[0],attObj=skinAttachments[si][oldK];
+          delete skinAttachments[si][oldK];
+          attObj.name='PERFECT';skinAttachments[si]['PERFECT']=attObj;
+          aSlots[si].attachment=aSlots[si].attachment.map(([t,k])=>[t,k===oldK?'PERFECT':k]);
+          if(aDeform[`${si}:${oldK}`]){aDeform[`${si}:PERFECT`]=Object.assign(aDeform[`${si}:${oldK}`],{ak:'PERFECT'});delete aDeform[`${si}:${oldK}`]}
+          break;
+        }
+      }
+    }
+
+    outAnims[an]={slots:aSlots,bones:aBones,deform:aDeform};
+  }
+
+  // Si alguna de las 7 palabras estandar se incluyo en el atlas pero estaba oculta en las 7 animaciones,
+  // registrar un slot inactivo en skin default para que 100% de las regiones del atlas esten referenciadas en .skel
+  for(const it of packItems){
+    if(!referencedRegions.has(it.name)){
+      const bi=bones.length,si=slots.length;
+      bones.push({name:`ref_b_${it.name}`,parent:0,x:0,y:0,rot:0,sx:1,sy:1});
+      slots.push({name:`ref_s_${it.name}`,bone:bi,blend:0});
+      const hw=it.w*.5,hh=it.h*.5;
+      skinAttachments[si]={[it.name]:{
+        name:it.name,path:it.name,uvs:[1,1,0,1,0,0,1,0],tris:[1,2,3,1,3,0],
+        verts:[hw,-hh,-hw,-hh,-hw,hh,hw,hh],w:it.w,h:it.h
+      }};
+    }
+  }
+
+  const skelBytes=serializeSpine40SkelJS(bones,slots,skinAttachments,outAnims,'4.0.64',60);
+  const catJson=catalogItemJson(cleanName);
+  return{cleanName,fullName,skelBytes,atlasText,atlasCanvas,catJson,regionCount:packItems.length};
+}
+
+function buildSha256SumsTxt(namedBytes){
+  // namedBytes: [{fileName, data: Uint8Array}, ...] (sin prefijo de carpeta)
+  const sorted=namedBytes.slice().sort((a,b)=>a.fileName.localeCompare(b.fileName));
+  return sorted.map(f=>`${sha256Hex(f.data)}  ${f.fileName}`).join('\n')+'\n';
+}
+
 function flatten(B){
   const tracks=B.tracks.map(t=>{const times=[],att=[],col=[],vofs=[],verts=[];
     for(const f of t.frames){times.push(f[0]);att.push(f[1]);if(f[1]<0){col.push(0,0,0,0);vofs.push(-1)}else{col.push(f[2],f[3],f[4],f[5]);vofs.push(verts.length);for(let i=6;i<f.length;i++)verts.push(f[i])}}
@@ -949,22 +1512,15 @@ function buildLfx(){
     animations:animsDict};
 }
 function spineAtlas(n){
-  const L=App.lfx;let s='';
-  L.pages.forEach((p,i)=>{s+=`${n}${i?'_'+(i+1):''}.png\nsize:${p.w},${p.h}\nfilter:Linear,Linear\n`;
-    for(const[rn,r]of Object.entries(L.regions))if(r.page===i)s+=`${rn}\nbounds:${r.x},${r.y},${r.w},${r.h}\n`+(r.rotate?'rotate:90\n':'');s+='\n'});
-  return s;
+  return compileSpine40PackageJS(n).atlasText;
 }
 function catalogJson(n){
-  const c=n.replace(/^ScoringFX_/,'');
-  return JSON.stringify({kind:'ScoringFXSkeletonData',name:`${n}_SkeletonData`,scoringFxName:c,scale:.01,defaultMix:.2,
-    blendModeMaterials:{requiresBlendModeMaterials:1,applyAdditiveMaterial:1,additiveMaterials:[{pageName:`${n}.png`,material:{m_FileID:0,m_PathID:0}}],multiplyMaterials:[],screenMaterials:[]},
-    skeletonPath:`Assets/Data/Spine/ScoringFXs/${c}/${n}.skel`,atlasPath:`Assets/Data/Spine/ScoringFXs/${c}/${n}.atlas`,texturePath:`Assets/Data/Spine/ScoringFXs/${c}/${n}.png`,
-    thumbnailPath:`Assets/Data/Textures/Thumbnails/ScoringFXs/ScoringFX_Thumbnail_${c}.png`},null,2);
+  return catalogItemJson(n);
 }
 async function thumbnailBlob(){
   const c=mk(256,256),x=c.getContext('2d');x.fillStyle='#0b1020';x.fillRect(0,0,256,256);
   const old=[App.cam.zoom,App.cam.x,App.cam.y];const B=bakeAnim(App.lfx.animations.Perfect?'Perfect':App.anim);
-  const gc=$('#gl');App.cam={zoom:.5,x:0,y:0};GLR.frame(B,Math.min(B.duration*.45,B.duration));
+  const gc=$('#gl');App.cam={zoom:.5,x:0,y:0};GLR.frame(B,Math.min(.32,B.duration*.5));
   const s=Math.min(gc.width,gc.height);x.drawImage(gc,(gc.width-s)/2,(gc.height-s)/2,s,s,0,0,256,256);App.cam={zoom:old[0],x:old[1],y:old[2]};
   return canvasBlob(c);
 }
@@ -977,7 +1533,6 @@ async function exportUnity(){
   }
   files.push({name: root + 'README_UNITY.txt', data: new TextEncoder().encode(readme(n))});
 
-  // Intentar incluir los scripts de Unity desde la carpeta Unity/ si están accesibles por HTTP
   try {
     const scripts = [
       'LiamFXData.cs', 'LiamFXPlayer.cs', 'LiamFXCanvasGraphic.cs',
@@ -995,7 +1550,7 @@ async function exportUnity(){
     }
   } catch(e){}
 
-  download(n+'_Unity.zip',zip(files));toast('¡ZIP de Unity descargado con éxito!');
+  download(n+'_Unity.zip',zip(files));toast('¡ZIP de Unity (LiamFX) descargado con éxito!');
 }
 
 async function exportUnityDirect(){
@@ -1008,13 +1563,11 @@ async function exportUnityDirect(){
     const n = baseName(), lfx = buildLfx();
     const targetDir = await dirHandle.getDirectoryHandle(n, { create: true });
     
-    // Guardar .lfx.json
     const jsonHandle = await targetDir.getFileHandle(n + '.lfx.json', { create: true });
     const jWr = await jsonHandle.createWritable();
     await jWr.write(JSON.stringify(lfx, null, 2));
     await jWr.close();
     
-    // Guardar PNGs
     if(App.pagesDirty) composePages();
     for(let i=0; i<App.pages.length; i++){
       const pageBlob = await canvasBlob(App.pages[i]);
@@ -1024,7 +1577,6 @@ async function exportUnityDirect(){
       await wr.close();
     }
     
-    // Guardar README
     const rdHandle = await targetDir.getFileHandle('README_UNITY.txt', { create: true });
     const rdWr = await rdHandle.createWritable();
     await rdWr.write(readme(n));
@@ -1037,24 +1589,71 @@ async function exportUnityDirect(){
 }
 
 function copyCSharp(){
-  const n = baseName();
   const code = `using UnityEngine;\nusing LiamFX;\n\npublic class ScoringController : MonoBehaviour\n{\n    [Header("Asigna el LiamFXPlayer (3D) o LiamFXCanvasGraphic (UI)")]\n    public LiamFXPlayer scoringPlayer;\n\n    public void OnJudgeMove(ScoringFeedbackType judgment)\n    {\n        scoringPlayer.Play(judgment);\n    }\n}`;
   navigator.clipboard.writeText(code).then(() => toast('Código C# copiado al portapapeles')).catch(() => toast('No se pudo copiar'));
 }
 
-async function exportSpine(){
-  if(!App.skel){toast('Esta plantilla no trae el .skel original; cárgalo desde la biblioteca');return}
-  const n=baseName();if(App.pagesDirty)composePages();const files=[];
-  for(let i=0;i<App.spinePages.length;i++)files.push({name:n+(i?'_'+(i+1):'')+'.png',data:new Uint8Array(await (await canvasBlob(App.spinePages[i])).arrayBuffer())});
-  files.push({name:n+'.atlas',data:new TextEncoder().encode(spineAtlas(n))},{name:n+'.skel',data:new Uint8Array(App.skel)},
-    {name:'scoring_fx_definitions_entry.json',data:new TextEncoder().encode(catalogJson(n))});
-  const thumb=await thumbnailBlob();files.push({name:'ScoringFX_Thumbnail_'+n.replace(/^ScoringFX_/,'')+'.png',data:new Uint8Array(await thumb.arrayBuffer())});
-  download(n+'_Spine.zip',zip(files));toast('ZIP Spine listo');
+async function buildSpineDeliveryFiles(){
+  const pkg=compileSpine40PackageJS($('#nameIn').value);
+  const enc=new TextEncoder();
+  const pngBytes=new Uint8Array(await (await canvasBlob(pkg.atlasCanvas)).arrayBuffer());
+  const thumbBytes=new Uint8Array(await (await thumbnailBlob()).arrayBuffer());
+  const atlasBytes=enc.encode(pkg.atlasText);
+  const catBytes=enc.encode(pkg.catJson);
+  const core=[
+    {fileName:`${pkg.fullName}.skel`,data:pkg.skelBytes},
+    {fileName:`${pkg.fullName}.atlas`,data:atlasBytes},
+    {fileName:`${pkg.fullName}.png`,data:pngBytes},
+    {fileName:`ScoringFX_Thumbnail_${pkg.cleanName}.png`,data:thumbBytes},
+    {fileName:'catalog_item.json',data:catBytes}
+  ];
+  const sumsBytes=enc.encode(buildSha256SumsTxt(core));
+  core.push({fileName:'SHA256SUMS.txt',data:sumsBytes});
+  return{pkg,core};
 }
+
+async function exportSpine(){
+  if(!App.lfx){toast('Carga primero una plantilla');return}
+  toast('Compilando binario Spine 4.0.64…');
+  const{pkg,core}=await buildSpineDeliveryFiles();
+  const root=pkg.fullName+'/';
+  const zipEntries=core.map(f=>({name:root+f.fileName,data:f.data}));
+  download(pkg.fullName+'_Spine.zip',zip(zipEntries));
+  toast(`✔ ${pkg.fullName}_Spine.zip listo (${(pkg.skelBytes.length/1024).toFixed(1)} KB .skel, ${pkg.regionCount} regiones)`);
+}
+
+async function exportSpineDirect(){
+  if(!window.showDirectoryPicker){
+    toast('Tu navegador no soporta selección directa de carpetas. Usa "Descargar ZIP Spine 4.0.64".');
+    return;
+  }
+  if(!App.lfx){toast('Carga primero una plantilla');return}
+  try{
+    const dirHandle=await window.showDirectoryPicker();
+    toast('Compilando y guardando paquete Spine 4.0.64…');
+    const{pkg,core}=await buildSpineDeliveryFiles();
+    const targetDir=await dirHandle.getDirectoryHandle(pkg.fullName,{create:true});
+    for(const f of core){
+      const fh=await targetDir.getFileHandle(f.fileName,{create:true});
+      const wr=await fh.createWritable();
+      await wr.write(f.data);
+      await wr.close();
+    }
+    toast(`✔ Carpeta ${pkg.fullName}/ guardada con éxito!`);
+  }catch(err){
+    if(err.name!=='AbortError')toast('Error: '+err.message);
+  }
+}
+
 function readme(n){return `LiamFX · ${n}\n\n1) Copia esta carpeta dentro de Assets/ de tu proyecto Unity.\n2) Importa los scripts de la carpeta Unity/ (LiamFXPlayer.cs, Editor/, Shaders/).\n3) Menú: GameObject > Liam > ScoringFX Player. Asigna "${n}.lfx.json" y los PNG (en orden).\n4) Llama a player.Play("Perfect") / "Super" / "Good" / "Ok" / "Bad" / "Gold" / "GoldMiss".\n`}
+function refreshExportModalInfo(){
+  const c=fxCleanName(),f='ScoringFX_'+c;
+  $('#skelState').textContent=`✔ Compilador Spine 4.0.64 listo → ${f}/${f}.{skel,atlas,png} + ScoringFX_Thumbnail_${c}.png + catalog_item.json + SHA256SUMS.txt (Nombre limpio: "${c}")`;
+  $('#catOut').value=catalogItemJson(c);
+}
 function openExport(){
-  $('#skelState').textContent=App.skel?'✔ .skel original disponible':'⚠ falta el .skel original (usa la biblioteca o súbelo con la plantilla)';
-  $('#catOut').value=catalogJson(baseName());$('#expModal').classList.add('on');
+  refreshExportModalInfo();
+  $('#expModal').classList.add('on');
 }
 /* ====================== proyecto ====================== */
 function saveProject(){
@@ -1206,7 +1805,24 @@ async function handleBridgeCommand(action, params) {
         for (let i = 0; i < App.pages.length; i++) {
           pages.push({ file: lfx.pages[i].file, dataUrl: App.pages[i].toDataURL('image/png') });
         }
-        return { ok: true, bundle: { name: n, lfx, pages } };
+        const { pkg, core } = await buildSpineDeliveryFiles();
+        const u8ToB64 = u8 => {
+          let bin = '';
+          for (let i = 0; i < u8.length; i += 0x8000) bin += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000));
+          return btoa(bin);
+        };
+        const spineFiles = core.map(f => ({ fileName: f.fileName, base64: u8ToB64(f.data) }));
+        return {
+          ok: true,
+          bundle: {
+            name: n,
+            cleanName: pkg.cleanName,
+            fullName: pkg.fullName,
+            spineFiles,
+            lfx,
+            pages
+          }
+        };
       }
       default:
         return { ok: false, error: 'Acción desconocida: ' + action };
@@ -1221,7 +1837,13 @@ function bindEvents(){
   $('#tabBtnSpine').onclick = () => { $('.tab-pane.on').classList.remove('on'); $('#paneSpine').classList.add('on'); $('#tabBtnSpine').classList.add('on'); $('#tabBtnUnity').classList.remove('on'); $('#tabBtnLoose').classList.remove('on'); };
   $('#tabBtnLoose').onclick = () => { $('.tab-pane.on').classList.remove('on'); $('#paneLoose').classList.add('on'); $('#tabBtnLoose').classList.add('on'); $('#tabBtnUnity').classList.remove('on'); $('#tabBtnSpine').classList.remove('on'); };
   $('#exUnityDirect').onclick = exportUnityDirect;
+  $('#exSpineDirect').onclick = exportSpineDirect;
   $('#copyCSharp').onclick = copyCSharp;
+  $('#copyCatalogBtn').onclick = () => {
+    refreshExportModalInfo();
+    navigator.clipboard.writeText($('#catOut').value).then(() => toast('catalog_item.json copiado al portapapeles')).catch(() => toast('No se pudo copiar'));
+  };
+  $('#nameIn').oninput = () => { if($('#expModal').classList.contains('on')) refreshExportModalInfo(); };
   document.querySelectorAll('#quickFbBar .fb-btn').forEach(btn => {
     btn.onclick = () => setAnim(btn.dataset.a);
   });
@@ -1232,13 +1854,13 @@ function bindEvents(){
   $('#exUnity').onclick=exportUnity;$('#exSpine').onclick=exportSpine;
   $('#exJson').onclick=()=>download(baseName()+'.lfx.json',JSON.stringify(buildLfx()));
   $('#exPng').onclick=async()=>{if(App.pagesDirty)composePages();const f=pageFiles(baseName());for(let i=0;i<App.pages.length;i++)download(f[i],await canvasBlob(App.pages[i]))};
-  $('#exThumb').onclick=async()=>download('ScoringFX_Thumbnail_'+baseName().replace(/^ScoringFX_/,'')+'.png',await thumbnailBlob());
+  $('#exThumb').onclick=async()=>download('ScoringFX_Thumbnail_'+fxCleanName()+'.png',await thumbnailBlob());
   $('#fAll').onclick=()=>{App.filter='all';buildRegionList()};$('#fTxt').onclick=()=>{App.filter='txt';buildRegionList()};$('#fFx').onclick=()=>{App.filter='fx';buildRegionList()};
   $('#texFile').onchange=e=>importImages(e.target.files);
   const dr=$('#drop');dr.ondragover=e=>{e.preventDefault();dr.classList.add('over')};dr.ondragleave=()=>dr.classList.remove('over');dr.ondrop=e=>{e.preventDefault();dr.classList.remove('over');importImages(e.dataTransfer.files)};
   $('#addEm').onclick=()=>{const ex=newEmitter();App.extras.push(ex);App.sel={kind:'extra',id:ex.id};buildExList();buildInspector();touch(true);if(!ex.texId)toast('Genera o importa una textura y elígela en la capa')};
   $('#addBg').onclick=()=>{const ex=newBg();App.extras.push(ex);App.sel={kind:'extra',id:ex.id};buildExList();buildInspector();touch(true);if(!ex.texId)toast('Importa una textura para el fondo')};
-  $('#bgSel').onchange=e=>$('#stage').className=e.target.value;$('#gChk').onchange=()=>drawNow();
+  $('#bgSel').onchange=e=>$('#stage').className=e.target.value;$('#gChk').onchange=()=>drawNow();$('#jdnBlendChk').onchange=()=>drawNow();
   const z=$('#zoom');z.oninput=()=>{App.cam.zoom=+z.value;$('#zLab').textContent=Math.round(App.cam.zoom*100)+'%'};
   $('#zReset').onclick=()=>{App.cam={zoom:1,x:0,y:0};z.value=1;$('#zLab').textContent='100%'};
   $('#snap').onclick=async()=>{drawNow();download(`${baseName()}_${App.anim}.png`,await canvasBlob($('#gl')))};
@@ -1284,7 +1906,8 @@ async function selfTest(){
     App.t=B2.duration*.4;drawNow();
     const lfx=buildLfx();step('export lfx v2',(lfx.animations.length===7||Object.keys(lfx.animations).length===7)&&lfx.pages.length===2,lfx.pages.map(p=>p.file+' '+p.w).join(','));
     const j=JSON.stringify(lfx);step('tamano json',j.length>1000,(j.length/1024|0)+' KB');
-    step('atlas spine',/ScoringFX_Custom\.png/.test(spineAtlas('ScoringFX_Custom'))||true,'ok');
+    const spPkg=compileSpine40PackageJS('Custom');
+    step('compilador Spine 4.0.64',spPkg.skelBytes.length>1000&&/^ScoringFX_Custom\.png/.test(spPkg.atlasText),spPkg.skelBytes.length+' B .skel, '+spPkg.regionCount+' regs');
     App.t=B2.duration*.4;App.sel={kind:'region',id:'PERFECT'};buildRegionList();buildInspector();
   }catch(e){R.ok=false;R.err=String(e&&e.stack||e)}
   $('#selftest').textContent=JSON.stringify(R);document.title='SELFTEST '+(R.ok?'OK':'FAIL');
@@ -1320,21 +1943,21 @@ init();
   /* secciones plegables */
   document.querySelectorAll('aside section > h4').forEach(h=>h.addEventListener('click',e=>{if(e.target.closest('button'))return;h.parentElement.classList.toggle('fold')}));
 
-  /* presets de partículas / fondos */
+  /* presets de partículas / fondos (calibrados para Alfa Normal de UI Toolkit JDNext) */
   function shapeTex(n){
     const ex=Object.values(App.texLib).find(t=>t.name===n);if(ex)return ex.id;
     const sz=(n==='Sunburst'||n==='Medio-Sol JD4'||n==='Cortina JD4')?256:128,c=mk(sz,sz);SHAPES[n](c.getContext('2d'),sz);
     return addTexture(n,c);
   }
   const PRE={
-    '🟢 Columna JD14':{k:'b',shape:'Columna JD14',p:{name:'Columna UbiArt JD14',w:350,sy:1.4,oy:150,s0:.4,spin:0,pulse:.01,tint:'#44ca08',alpha:.78,behind:true,additive:false,ease:'outCubic'}},
-    '🫧 Bokeh GOOD':{k:'e',shape:'Burbuja',p:{name:'Burbujas Bokeh UbiArt',count:8,spawn:110,life:720,lifeJit:.35,spdA:20,spdB:55,angA:55,angB:125,radius:145,grav:0,drag:.4,szA:105,szB:185,sizeJit:.4,rotRand:0,rotA:0,rotB:0,alpha:.62,fadeIn:.18,fadeOut:.5,colA:'#24dcff',colB:'#66eeff',behind:true}},
-    '⚡ Láser JD14':{k:'b',shape:'Barra EQ',p:{name:'Haces Láser PERFECT',w:180,sy:2.6,oy:145,s0:.3,spin:0,pulse:.14,pulseHz:5,tint:'#a8ff38',alpha:.65,behind:true,additive:true}},
-    '☀️ Rayos YEAH':{k:'b',shape:'Sunburst',p:{name:'Rayos Dorados YEAH',w:660,sy:1,oy:18,s0:.45,spin:16,pulse:.02,tint:'#ffd648',alpha:.82,behind:true,additive:true,exit:260,exitScale:1.35}},
-    '🟣 Cortina JD4':{k:'b',shape:'Cortina JD4',p:{name:'Cortina Unilateral JD4',w:420,sy:.9,ox:35,oy:24,s0:.35,spin:0,pulse:.01,tint:'#9a12f0',alpha:.85,behind:true,additive:false,ease:'outCubic'}},
-    '🌅 Medio-Sol JD4':{k:'b',shape:'Medio-Sol JD4',p:{name:'Medio-Sol JD4 Perfect',w:410,sy:1.05,ox:-15,oy:14,s0:.4,spin:0,pulse:.02,tint:'#adfa24',alpha:.82,behind:true,additive:true,ease:'outBack'}},
-    '✨ Chispas ↑':{k:'e',shape:'Destello',p:{name:'Chispas ascendentes',count:30,spawn:260,life:620,lifeJit:.5,spdA:70,spdB:190,angA:65,angB:115,radius:150,grav:60,drag:.6,szA:22,szB:0,sizeJit:.5,alpha:1,fadeIn:.15,fadeOut:.55,colA:'#ffffff',colB:'#c8ff68'}},
-    '💥 Ráfaga':{k:'e',shape:'Estrella',p:{name:'Ráfaga radial',count:26,spawn:50,life:480,spdA:220,spdB:460,angA:0,angB:360,radius:30,grav:0,drag:2,szA:36,szB:0,colA:'#fff6c0',colB:'#ffc21a'}}
+    '🟢 Columna JD14':{k:'b',shape:'Columna JD14',p:{name:'Columna UbiArt JD14',w:350,sy:1.4,oy:150,s0:.4,spin:0,pulse:.01,tint:'#55de14',alpha:.84,behind:true,additive:false,ease:'outCubic'}},
+    '🫧 Bokeh GOOD':{k:'e',shape:'Burbuja',p:{name:'Burbujas Bokeh UbiArt',count:8,spawn:110,life:720,lifeJit:.35,spdA:20,spdB:55,angA:55,angB:125,radius:145,grav:0,drag:.4,szA:105,szB:185,sizeJit:.4,rotRand:0,rotA:0,rotB:0,alpha:.68,fadeIn:.18,fadeOut:.5,colA:'#34e2ff',colB:'#78f2ff',behind:true,additive:false}},
+    '⚡ Láser JD14':{k:'b',shape:'Barra EQ',p:{name:'Haces Láser PERFECT',w:180,sy:2.6,oy:145,s0:.3,spin:0,pulse:.14,pulseHz:5,tint:'#ccff72',alpha:.72,behind:true,additive:false}},
+    '☀️ Rayos YEAH':{k:'b',shape:'Sunburst',p:{name:'Rayos Dorados YEAH',w:660,sy:1,oy:18,s0:.45,spin:16,pulse:.02,tint:'#ffe270',alpha:.84,behind:true,additive:false,exit:260,exitScale:1.35}},
+    '🟣 Cortina JD4':{k:'b',shape:'Cortina JD4',p:{name:'Cortina Unilateral JD4',w:420,sy:.9,ox:35,oy:24,s0:.35,spin:0,pulse:.01,tint:'#a820f8',alpha:.88,behind:true,additive:false,ease:'outCubic'}},
+    '🌅 Medio-Sol JD4':{k:'b',shape:'Medio-Sol JD4',p:{name:'Medio-Sol JD4 Perfect',w:410,sy:1.05,ox:-15,oy:14,s0:.4,spin:0,pulse:.02,tint:'#bfff3c',alpha:.85,behind:true,additive:false,ease:'outBack'}},
+    '✨ Chispas ↑':{k:'e',shape:'Destello',p:{name:'Chispas ascendentes',count:30,spawn:260,life:620,lifeJit:.5,spdA:70,spdB:190,angA:65,angB:115,radius:150,grav:60,drag:.6,szA:22,szB:0,sizeJit:.5,alpha:1,fadeIn:.15,fadeOut:.55,colA:'#ffffff',colB:'#d8ff88',additive:false}},
+    '💥 Ráfaga':{k:'e',shape:'Estrella',p:{name:'Ráfaga radial',count:26,spawn:50,life:480,spdA:220,spdB:460,angA:0,angB:360,radius:30,grav:0,drag:2,szA:36,szB:0,colA:'#fff8d0',colB:'#ffd23a',additive:false}}
   };
   const pb=$('#presetBtns');
   Object.entries(PRE).forEach(([n,d])=>{const b=document.createElement('button');b.className='sm';b.textContent=n;b.title='Añade esta capa lista para usar a la animación actual';

@@ -1,9 +1,24 @@
-# LiamToolScores2Unity V3.5
+# LiamToolScores2Unity V4.0
 
 Herramienta web profesional para crear, personalizar, previsualizar y exportar efectos de puntuación (**ScoringFX**) de Just Dance directamente a Unity y al juego. Incluye integración en tiempo real con servidor **MCP (Model Context Protocol)** para automatización e inspección con Inteligencia Artificial.
 
 - **GitHub Pages**: https://ey-liam.github.io/LiamToolScores2Unity/
 - **Repositorio**: https://github.com/ey-liam/LiamToolScores2Unity
+
+---
+
+## Novedades en V4.0
+
+- **Packs clasicos con animaciones propias** (no reutilizan las de Classic): `JD4` y `JD2014_2016`, con columnas de color, burbujas/bokeh grandes alrededor de GOOD, ecualizador laser de PERFECT (JD14), rayos radiales (JD4), sunburst de 16 rayos en YEAH, chispas y onda expansiva.
+- **SUPER nuevo** (no existia en JD4 ni JD14): celeste claro entre Good y Perfect, con rayos, burbujas y destellos propios.
+- **`Custom_Scratch`**: pack neutro para crear scores desde cero.
+- **Galeria de packs** (boton `Packs` o tecla `P`) con miniaturas, busqueda y filtros.
+- **Generador de capas con presets**: Chispas, Rafaga radial, Burbujas, Confeti, Sunburst, Columna y Ecualizador (un clic), mas 4 formas nuevas.
+- **UI**: secciones plegables, atajos (Espacio, 1-7, flechas, P) y las 4 fuentes cargadas.
+- **Motor reproducible**: `tools/fxgen.py` genera los packs (`python tools/fxgen.py`); `tools/preview_lfx.py` renderiza hojas de contacto para revisar sin abrir el navegador.
+
+![JD2014-2016](docs/sheet14a.png)
+![JD4](docs/sheet4a.png)
 
 ---
 

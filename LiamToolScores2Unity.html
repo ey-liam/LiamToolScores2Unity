@@ -101,12 +101,41 @@ pre#selftest{display:none}
 .tab-pane{display:none}
 .tab-pane.on{display:block}
 
+
+/* ===== V4 UI ===== */
+header{background:linear-gradient(90deg,#0c1119,#101a2b 60%,#0c1119);box-shadow:0 1px 0 rgba(34,211,238,.15),0 6px 18px rgba(0,0,0,.35);position:relative;z-index:5}
+.logo{box-shadow:0 0 14px rgba(34,211,238,.45)}
+button,.btn{transition:all .14s}button:hover,.btn:hover{transform:translateY(-1px);box-shadow:0 2px 10px rgba(34,211,238,.18)}
+button:active{transform:none}
+h4{cursor:pointer;position:sticky;top:0;background:var(--p1);z-index:2;padding:2px 0}
+h4::after{content:'▾';color:var(--mut);margin-left:6px;font-size:10px}
+section.fold>*:not(h4){display:none}section.fold h4::after{content:'▸'}
+.packbtn{background:linear-gradient(135deg,#22d3ee,#6366f1)!important;color:#02131a!important;border:0!important;font-weight:800}
+#packModal .card{width:920px;max-width:96vw}
+#packTools{display:flex;gap:6px;align-items:center;margin:8px 0 12px;flex-wrap:wrap}
+#packTools input{flex:1;min-width:160px}
+.chip{padding:3px 10px;border-radius:14px;border:1px solid var(--bd);background:var(--p3);cursor:pointer;font-size:11px}
+.chip.on{border-color:var(--ac);background:rgba(34,211,238,.14);color:#fff}
+#packGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.pk{border:1px solid var(--bd);background:var(--p2);border-radius:12px;overflow:hidden;cursor:pointer;transition:all .15s;position:relative}
+.pk:hover{border-color:var(--ac);transform:translateY(-3px);box-shadow:0 8px 22px rgba(0,0,0,.45),0 0 0 1px var(--ac)}
+.pk.cur{border-color:var(--ac2);box-shadow:0 0 0 1px var(--ac2)}
+.pk .th{aspect-ratio:1;display:grid;place-items:center;font:900 26px Impact,sans-serif;color:#fff;background:linear-gradient(135deg,#1d2a47,#2b1d52);overflow:hidden}
+.pk .th img{width:100%;height:100%;object-fit:cover}
+.pk .nm{padding:6px 8px 2px;font-weight:700;font-size:12px}
+.pk .mt{padding:0 8px 8px;color:var(--mut);font-size:10px}
+.pk .gb{position:absolute;top:6px;left:6px;font-size:9px;padding:1px 7px;border-radius:9px;background:rgba(0,0,0,.65);border:1px solid var(--bd)}
+.pk .gb.classic{color:#fde68a;border-color:#92400e}.pk .gb.next{color:#7dd3fc}.pk .gb.custom{color:#6ee7b7}
+#presetBtns{display:flex;flex-wrap:wrap;gap:4px;margin:2px 0 8px}
+#presetBtns button{font-size:10.5px;padding:3px 8px;border-radius:12px;background:linear-gradient(135deg,rgba(34,211,238,.12),rgba(99,102,241,.14))}
+#kbd{position:absolute;right:10px;top:8px;font:10px Consolas,monospace;color:#6b7da0;pointer-events:none;text-align:right;line-height:1.5}
 </style>
 </head>
 <body>
 <header>
   <div class="logo">JD</div>
-  <div class="brand"><b>LiamToolScores2Unity <span style="color:var(--ac)">V3.5</span></b><small>Estudio de Scores · Unity & JD Next</small></div>
+  <div class="brand"><b>LiamToolScores2Unity <span style="color:var(--ac)">V4.0</span></b><small>Estudio de Scores · Unity & JD Next</small></div>
+  <button id="packBtn" class="packbtn sm" title="Galería de packs (JD4, JD 2014-2016, JD Next…)">🎨 Packs</button>
   <select id="tplSel" title="Plantilla original de Just Dance Next" style="max-width:180px"><option value="">(cargando biblioteca…)</option></select>
   <label class="btn sm">Abrir plantilla (.lfx/.png)<input id="tplFile" type="file" multiple accept=".json,.png,.skel" hidden></label>
   <input id="nameIn" type="text" value="ScoringFX_Custom" style="width:140px" title="Nombre del ScoringFX">
@@ -125,7 +154,8 @@ pre#selftest{display:none}
       <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px" id="shapeBtns"></div>
       <div class="grid" id="texGrid"></div>
     </section>
-    <section><h4>Capas extra <span><button class="sm" id="addEm">+ Partículas</button> <button class="sm" id="addBg">+ Fondo</button></span></h4><div class="list" id="exList"></div>
+    <section><h4>Capas extra <span><button class="sm" id="addEm">+ Partículas</button> <button class="sm" id="addBg">+ Fondo</button></span></h4><div id="presetBtns"></div>
+      <div class="list" id="exList"></div>
       <div class="hint">Las capas extra se hornean a keyframes: funcionan en Unity (runtime LiamFX). No existen en el .skel original.</div></section>
   </aside>
   <div id="center">
@@ -224,6 +254,13 @@ pre#selftest{display:none}
       <button id="exThumb">Thumbnail 256×256</button>
     </div>
   </div>
+</div></div>
+<div class="modal" id="packModal"><div class="card">
+  <div style="display:flex;justify-content:space-between;align-items:center"><h3 style="margin:0">🎨 Galería de packs</h3><button class="sm" id="packClose">✕</button></div>
+  <div id="packTools"><input type="text" id="packQ" placeholder="Buscar pack…">
+    <span class="chip on" data-g="all">Todos</span><span class="chip" data-g="classic">Clásicos (JD4 · 2014-16)</span><span class="chip" data-g="next">JD Next</span><span class="chip" data-g="custom">Desde cero</span></div>
+  <div id="packGrid"></div>
+  <div class="hint" style="margin-top:10px">Clic en un pack para cargarlo. Los packs clásicos usan animaciones propias (columnas de color, burbujas, ecualizador, sunburst) y todo es editable: textos, colores, capas y partículas.</div>
 </div></div>
 <div id="toast"></div>
 <pre id="selftest"></pre>
@@ -855,7 +892,11 @@ const SHAPES={
  'Anillo':(x,s)=>{x.strokeStyle='#fff';x.lineWidth=s*.08;x.beginPath();x.arc(s/2,s/2,s*.4,0,7);x.stroke()},
  'Círculo':(x,s)=>{x.fillStyle='#fff';x.beginPath();x.arc(s/2,s/2,s*.42,0,7);x.fill()},
  'Corazón':(x,s)=>{x.fillStyle='#fff';x.beginPath();x.moveTo(s/2,s*.85);x.bezierCurveTo(s*.05,s*.55,s*.1,s*.12,s/2,s*.32);x.bezierCurveTo(s*.9,s*.12,s*.95,s*.55,s/2,s*.85);x.fill()},
- 'Rayo':(x,s)=>{const g=x.createLinearGradient(s/2,s,s/2,0);g.addColorStop(0,'rgba(255,255,255,.9)');g.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=g;x.beginPath();x.moveTo(s*.46,s);x.lineTo(s*.54,s);x.lineTo(s*.62,0);x.lineTo(s*.38,0);x.fill()}
+ 'Rayo':(x,s)=>{const g=x.createLinearGradient(s/2,s,s/2,0);g.addColorStop(0,'rgba(255,255,255,.9)');g.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=g;x.beginPath();x.moveTo(s*.46,s);x.lineTo(s*.54,s);x.lineTo(s*.62,0);x.lineTo(s*.38,0);x.fill()},
+  'Burbuja':(x,s)=>{x.fillStyle='rgba(255,255,255,.28)';x.beginPath();x.arc(s/2,s/2,s*.46,0,7);x.fill();x.strokeStyle='rgba(255,255,255,.95)';x.lineWidth=s*.025;x.stroke();x.fillStyle='rgba(255,255,255,.35)';x.beginPath();x.ellipse(s*.36,s*.3,s*.14,s*.09,-.5,0,7);x.fill()},
+  'Sunburst':(x,s)=>{x.translate(s/2,s/2);for(let i=0;i<16;i++){x.rotate(Math.PI/8);const g=x.createLinearGradient(0,0,s/2,0);g.addColorStop(0,'rgba(255,255,255,.95)');g.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=g;x.beginPath();x.moveTo(0,0);x.lineTo(s/2,-s*.045);x.lineTo(s/2,s*.045);x.fill()}},
+  'Columna':(x,s)=>{const g=x.createLinearGradient(0,0,0,s);g.addColorStop(0,'rgba(255,255,255,0)');g.addColorStop(.2,'rgba(255,255,255,1)');g.addColorStop(.8,'rgba(255,255,255,1)');g.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=g;x.fillRect(0,0,s,s)},
+  'Barra EQ':(x,s)=>{const g=x.createLinearGradient(0,0,s,0);g.addColorStop(0,'rgba(255,255,255,0)');g.addColorStop(.5,'rgba(255,255,255,1)');g.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=g;x.fillRect(s*.38,s*.05,s*.24,s*.9)}
 };
 function buildShapeBtns(){const b=$('#shapeBtns');for(const[n,f]of Object.entries(SHAPES)){const e=document.createElement('button');e.className='sm';e.textContent='+ '+n;e.onclick=()=>{const c=mk(128,128);f(c.getContext('2d'),128);addTexture(n,c);buildInspector()};b.append(e)}}
 async function loadFont(file){const name=file.name.replace(/\.[^.]+$/,'').replace(/[^\w]/g,'');const ff=new FontFace(name,await file.arrayBuffer());await ff.load();document.fonts.add(ff);if(!App.fonts.includes(name))App.fonts.unshift(name);return name}
@@ -1245,5 +1286,65 @@ async function selfTest(){
 }
 init();
 </script>
+<script>
+/* ===================== V4: galería de packs, presets, atajos ===================== */
+(function(){
+  const GROUP=n=>['JD4','JD2014_2016'].includes(n)?'classic':(n==='Custom_Scratch'?'custom':'next');
+  let idx=[],grp='all';
+  async function openPacks(){
+    $('#packModal').classList.add('on');
+    if(!idx.length){try{idx=await (await fetch('Library/library_index.json')).json()}catch(e){toast('No se pudo leer la biblioteca');return}}
+    render();
+  }
+  function render(){
+    const q=($('#packQ').value||'').toLowerCase(),g=$('#packGrid');g.innerHTML='';
+    idx.filter(i=>(grp==='all'||(i.group||GROUP(i.name))===grp)&&i.name.toLowerCase().includes(q)).forEach(i=>{
+      const gr=i.group||GROUP(i.name),d=document.createElement('div');d.className='pk'+(App.tplName===i.name?' cur':'');
+      const label={classic:'Clásico',next:'JD Next',custom:'Desde cero'}[gr];
+      d.innerHTML=`<span class="gb ${gr}">${label}</span><div class="th">${i.thumb?`<img src="Library/${i.thumb}" alt="">`:i.name.slice(0,2).toUpperCase()}</div><div class="nm">${i.name}</div><div class="mt">${i.animations.length} feedbacks</div>`;
+      const im=d.querySelector('img');if(im)im.onerror=()=>{im.remove();d.querySelector('.th').textContent=i.name.slice(0,2).toUpperCase()};
+      d.onclick=async()=>{try{await loadTemplateUrl(`Library/${i.name}/`,i.name);$('#tplSel').value=i.name;$('#packModal').classList.remove('on')}catch(e){toast('Error cargando '+i.name)}};
+      g.append(d);
+    });
+  }
+  $('#packBtn').onclick=openPacks;$('#packClose').onclick=()=>$('#packModal').classList.remove('on');
+  $('#packQ').oninput=render;
+  document.querySelectorAll('#packTools .chip').forEach(c=>c.onclick=()=>{grp=c.dataset.g;document.querySelectorAll('#packTools .chip').forEach(x=>x.classList.toggle('on',x===c));render()});
+  $('#packModal').onclick=e=>{if(e.target.id==='packModal')e.target.classList.remove('on')};
+
+  /* secciones plegables */
+  document.querySelectorAll('aside section > h4').forEach(h=>h.addEventListener('click',e=>{if(e.target.closest('button'))return;h.parentElement.classList.toggle('fold')}));
+
+  /* presets de partículas / fondos */
+  function shapeTex(n){
+    const ex=Object.values(App.texLib).find(t=>t.name===n);if(ex)return ex.id;
+    const sz=n==='Sunburst'?256:128,c=mk(sz,sz);SHAPES[n](c.getContext('2d'),sz);
+    return addTexture(n,c);
+  }
+  const PRE={
+    '✨ Chispas ↑':{k:'e',shape:'Destello',p:{name:'Chispas ascendentes',count:30,spawn:260,life:620,lifeJit:.5,spdA:70,spdB:190,angA:65,angB:115,radius:150,grav:60,drag:.6,szA:34,szB:0,sizeJit:.5,alpha:1,fadeIn:.15,fadeOut:.55,colA:'#ffffff',colB:'#bff7ff'}},
+    '💥 Ráfaga':{k:'e',shape:'Estrella',p:{name:'Ráfaga radial',count:26,spawn:50,life:480,spdA:220,spdB:460,angA:0,angB:360,radius:30,grav:0,drag:2,szA:42,szB:0,colA:'#fff6c0',colB:'#ffc21a'}},
+    '🫧 Burbujas':{k:'e',shape:'Burbuja',p:{name:'Burbujas bokeh',count:9,spawn:130,life:760,lifeJit:.4,spdA:25,spdB:70,angA:55,angB:125,radius:170,grav:0,drag:.4,szA:90,szB:170,sizeJit:.4,rotRand:0,rotA:0,rotB:0,alpha:.9,fadeIn:.2,fadeOut:.5,colA:'#cfefff',colB:'#ffffff'}},
+    '🎊 Confeti':{k:'e',shape:'Estrella',p:{name:'Confeti',count:44,spawn:160,life:900,spdA:180,spdB:420,angA:50,angB:130,radius:40,grav:-420,drag:.8,szA:28,szB:14,colA:'#ffd24a',colB:'#ff4aa0'}},
+    '🔆 Sunburst':{k:'b',shape:'Sunburst',p:{name:'Rayos giratorios',w:900,sy:1,s0:.3,spin:40,pulse:.02,tint:'#ffd24a',alpha:.75,behind:true,additive:true,exit:260,exitScale:1.6}},
+    '▮ Columna':{k:'b',shape:'Columna',p:{name:'Columna de color',w:260,sy:2.4,s0:.6,spin:0,pulse:.01,tint:'#17b6ff',alpha:.8,behind:true,additive:false,ease:'outCubic'}},
+    '▥ Ecualizador':{k:'b',shape:'Barra EQ',p:{name:'Barra EQ',w:130,sy:3,s0:.2,spin:0,pulse:.18,pulseHz:5,tint:'#7dff5a',alpha:.9,behind:true,additive:true}}
+  };
+  const pb=$('#presetBtns');
+  Object.entries(PRE).forEach(([n,d])=>{const b=document.createElement('button');b.className='sm';b.textContent=n;b.title='Añade esta capa lista para usar a la animación actual';
+    b.onclick=()=>{const tid=shapeTex(d.shape),ex=d.k==='e'?newEmitter():newBg();Object.assign(ex,d.p,{texId:tid,anims:[App.anim]});App.extras.push(ex);App.sel={kind:'extra',id:ex.id};buildExList();buildInspector();touch(true);toast('Capa añadida: '+(d.p.name))};pb.append(b)});
+
+  /* ayuda de atajos */
+  const k=document.createElement('div');k.id='kbd';k.innerHTML='Espacio ▶/⏸ · 1-7 feedback · ←/→ frame · P packs';$('#stage').append(k);
+  window.addEventListener('keydown',e=>{
+    if(/INPUT|SELECT|TEXTAREA/.test(e.target.tagName)||e.ctrlKey||e.metaKey)return;
+    const ks=['Perfect','Super','Good','Ok','Bad','Gold','GoldMiss'].filter(a=>App.lfx&&App.lfx.animations[a]);
+    if(/^[1-7]$/.test(e.key)&&ks[+e.key-1]){setAnim(ks[+e.key-1]);e.preventDefault()}
+    else if(e.key==='p'||e.key==='P'){openPacks();e.preventDefault()}
+    else if(e.key==='ArrowRight'||e.key==='ArrowLeft'){App.playing=false;$('#pBtn').textContent='▶';App.t=Math.max(0,App.t+(e.key==='ArrowRight'?1:-1)/FPS);drawNow();e.preventDefault()}
+  });
+})();
+</script>
+
 </body>
 </html>

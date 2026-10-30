@@ -1213,7 +1213,7 @@ function bindEvents(){
 /* ====================== arranque ====================== */
 async function init(){
   GLR.init();buildShapeBtns();bindEvents();requestAnimationFrame(loop);
-  try{const f=await fetch('Library/fonts/JustDanceBold.ttf');if(f.ok){const ff=new FontFace('JustDanceBold',await f.arrayBuffer());await ff.load();document.fonts.add(ff);App.fonts.unshift('JustDanceBold')}}catch(e){}
+  for(const [fam,file] of [['LiteraRegular','LiteraRegular.ttf'],['JustDanceRegular','JustDanceRegular.ttf'],['PressGothic','PressGothic.otf'],['JustDanceBold','JustDanceBold.ttf']]){try{const f=await fetch('Library/fonts/'+file);if(f.ok){const ff=new FontFace(fam,await f.arrayBuffer());await ff.load();document.fonts.add(ff);if(!App.fonts.includes(fam))App.fonts.unshift(fam)}}catch(e){}}
   try{
     const idx=await (await fetch('Library/library_index.json')).json();App.hasLibrary=true;window._templateNames=idx.map(i=>i.name);
     const s=$('#tplSel');s.innerHTML='<option value="">— plantilla original —</option>'+idx.map(i=>`<option value="${i.name}">${i.name}</option>`).join('');

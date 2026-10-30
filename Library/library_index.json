@@ -1,5 +1,31 @@
 [
   {
+    "name": "Custom_Scratch",
+    "file": "Custom_Scratch/Custom_Scratch.lfx.json",
+    "animations": [
+      "Bad",
+      "Gold",
+      "GoldMiss",
+      "Good",
+      "Ok",
+      "Perfect",
+      "Super"
+    ]
+  },
+  {
+    "name": "JD4",
+    "file": "JD4/JD4.lfx.json",
+    "animations": [
+      "Bad",
+      "Gold",
+      "GoldMiss",
+      "Good",
+      "Ok",
+      "Perfect",
+      "Super"
+    ]
+  },
+  {
     "name": "JD2014_2016",
     "file": "JD2014_2016/JD2014_2016.lfx.json",
     "animations": [

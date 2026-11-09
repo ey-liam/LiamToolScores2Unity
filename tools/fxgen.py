@@ -71,15 +71,32 @@ def eval_ubi_bezier(keys, tick):
             return (mu**3)*v0 + 3*(mu**2)*u*vo0 + 3*mu*(u**2)*vi1 + (u**3)*v1
     return keys[-1]["Value"][1]
 
+def smoothstep(e0, e1, x):
+    """Rampa suave 0..1 (Hermite) usada para difuminar bordes de las mascaras."""
+    u = np.clip((x - e0) / max(1e-6, (e1 - e0)), 0.0, 1.0)
+    return u * u * (3.0 - 2.0 * u)
+
+def bake_mask_rgb(im, gain=1.0):
+    """JDSpineMesh deriva la opacidad del color (alpha premultiplicado sobre el RGB).
+    Si el RGB queda a 1.0 en las zonas transparentes el sprite se dibuja como un rectangulo
+    solido con bordes duros. Por eso horneamos la mascara en el RGB y dejamos alpha = mascara."""
+    arr = np.asarray(im.convert("RGBA"), np.float32) / 255.0
+    m = np.clip(arr[..., 3] * gain, 0.0, 1.0)
+    out = np.zeros_like(arr)
+    out[..., :3] = m[..., None]
+    out[..., 3] = m
+    return Image.fromarray((out * 255.0 + 0.5).astype(np.uint8), "RGBA")
+
 def lum_to_white_alpha(im, gamma=1.0, gain=1.0):
-    """Convierte mascaras UbiArt en negro (DXT1/DXT5) a RGB blanco puro + Alpha = luminancia * alpha."""
+    """Convierte mascaras UbiArt en negro (DXT1/DXT5) a blanco premultiplicado:
+    RGB = mascara y Alpha = mascara, para que la luminancia coincida con la cobertura."""
     arr = np.asarray(im.convert("RGBA"), np.float32) / 255.0
     lum = np.maximum(np.maximum(arr[..., 0], arr[..., 1]), arr[..., 2])
     if gamma != 1.0:
         lum = np.power(np.clip(lum, 0.0, 1.0), gamma)
     al = np.clip(lum * arr[..., 3] * gain, 0.0, 1.0)
     out = np.zeros_like(arr)
-    out[..., :3] = 1.0
+    out[..., :3] = al[..., None]
     out[..., 3] = al
     return Image.fromarray((out * 255.0 + 0.5).astype(np.uint8), "RGBA")
 
@@ -208,19 +225,19 @@ def make_jd4_cross_sprite(glow_rgb, rim_rgb, w=128, h=116):
 
 def build_col_coach(grad_im, w=128, h=256):
     """Columna vertical autentica de JD 2014 basada en textures/grad_v_coach.png:
-    solida arriba, degradado suave abajo y bordes laterales nitidos con sutil realce."""
+    solida arriba, degradado suave abajo. Mascara horneada en RGB y bordes difuminados
+    para que no aparezca el rectangulo duro del shader de JDSpineMesh."""
     g = grad_im.resize((w, h), Image.Resampling.LANCZOS).convert("RGBA")
     arr = np.asarray(g, np.float32) / 255.0
     lum = arr[..., 0].copy()  # 1.0 arriba -> 0.0 abajo
-    # Suavizado minimo en los 10px superiores para evitar corte duro si se hace zoom-out
-    top_fade = np.minimum(1.0, np.arange(h, dtype=np.float32) / 10.0)[:, None]
-    # Realce sutil en los bordes izquierdo y derecho (como el marco luminoso del HUD JD14/15/16)
+    v = np.linspace(0.0, 1.0, h, dtype=np.float32)[:, None]
     x = np.linspace(0.0, 1.0, w, dtype=np.float32)[None, :]
     edge_dist = np.minimum(x, 1.0 - x)
-    rim = 1.0 + 0.22 * np.exp(-edge_dist / 0.035)
-    side_aa = np.minimum(1.0, edge_dist / 0.012)
-    alpha = np.clip(lum * top_fade * rim * side_aa, 0.0, 1.0)
-    out = np.ones((h, w, 4), np.float32)
+    side = smoothstep(0.0, 0.13, edge_dist)       # caida lateral amplia (~17 px)
+    top = smoothstep(0.0, 0.10, v)                # fade superior
+    alpha = np.clip(lum * top * side * 0.78, 0.0, 1.0)
+    out = np.zeros((h, w, 4), np.float32)
+    out[..., :3] = alpha[..., None]
     out[..., 3] = alpha
     return Image.fromarray((out * 255.0 + 0.5).astype(np.uint8), "RGBA")
 
@@ -232,12 +249,14 @@ def build_col_barcode(grad_im, barcode_im, w=160, h=256):
     stripe = 0.5 * (b[..., 1] + b[..., 2])
     s_min, s_max = float(stripe.min()), float(stripe.max())
     stripe = np.clip((stripe - s_min) / max(1e-5, s_max - s_min), 0.0, 1.0)
-    stripe = np.power(stripe, 1.55)
-    top_fade = np.minimum(1.0, np.arange(h, dtype=np.float32) / 12.0)[:, None]
+    stripe = np.power(stripe, 1.75)
+    v = np.linspace(0.0, 1.0, h, dtype=np.float32)[:, None]
     x = np.linspace(0.0, 1.0, w, dtype=np.float32)[None, :]
-    side = np.minimum(1.0, np.minimum(x, 1.0 - x) / 0.03)
-    alpha = np.clip(g[..., 0] * stripe * top_fade * side, 0.0, 1.0)
-    out = np.ones((h, w, 4), np.float32)
+    top_fade = smoothstep(0.0, 0.06, v)
+    side = smoothstep(0.0, 0.05, np.minimum(x, 1.0 - x))
+    alpha = np.clip(g[..., 0] * stripe * top_fade * side * 0.85, 0.0, 1.0)
+    out = np.zeros((h, w, 4), np.float32)
+    out[..., :3] = alpha[..., None]
     out[..., 3] = alpha
     return Image.fromarray((out * 255.0 + 0.5).astype(np.uint8), "RGBA")
 
@@ -262,26 +281,28 @@ def build_sunburst_12(s=320, n_rays=12, duty=0.46):
     dist = np.hypot(xx - c, yy - c) / (W * 0.49)
     fall = np.clip(1.0 - np.power(np.clip(dist, 0.0, 1.0), 1.85), 0.0, 1.0)
     arr = (np.asarray(im, np.float32) / 255.0) * fall
-    out = np.ones((W, W, 4), np.float32)
+    out = np.zeros((W, W, 4), np.float32)
+    out[..., :3] = arr[..., None]
     out[..., 3] = np.clip(arr, 0.0, 1.0)
     return Image.fromarray((out * 255.0 + 0.5).astype(np.uint8), "RGBA").resize((s, s), Image.Resampling.LANCZOS)
 
 def build_jd4_curtain(w=256, h=256):
-    """Cortina luminosa unilateral de Just Dance 4: linea divisoria vertical izquierda ultra nitida
-    que se desvanece suavemente hacia la derecha y arriba/abajo (HAPPY | PERFECT, JAZZY | OK, FUNKY | GOOD)."""
+    """Cortina luminosa unilateral de Just Dance 4: arranca en la linea divisoria izquierda
+    y se desvanece suavemente hacia la derecha y arriba/abajo (HAPPY | PERFECT, JAZZY | OK, FUNKY | GOOD)."""
     yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
     u = xx / (w - 1.0)
     v = yy / (h - 1.0)
-    # Borde izquierdo afilado en u=0.02 con linea divisoria brillante y caida exponencial suave a la derecha
-    left_mask = np.clip((u - 0.012) / 0.010, 0.0, 1.0)
-    horiz = np.power(np.clip(1.0 - u, 0.0, 1.0), 1.75) * left_mask
-    divider_line = np.exp(-((u - 0.022) / 0.008) ** 2) * 0.55
-    # Caida vertical: mas extendida hacia arriba (como en el HUD superior de JD4) y suave abajo
-    vert = np.minimum(1.0, v / 0.10) * np.power(np.clip((1.0 - v) / 0.78, 0.0, 1.0), 0.85)
+    # Linea divisoria izquierda con caida suave (sin borde duro) y degradado exponencial a la derecha
+    left_mask = smoothstep(0.0, 0.055, u)
+    horiz = np.power(np.clip(1.0 - u, 0.0, 1.0), 1.6) * left_mask
+    divider_line = np.exp(-((u - 0.045) / 0.030) ** 2) * 0.22
+    # Caida vertical: ligeramente mas extendida hacia arriba y suave abajo
+    vert = smoothstep(0.0, 0.10, v) * np.power(np.clip((1.0 - v) / 0.78, 0.0, 1.0), 0.85)
     vert_full = np.power(np.maximum(0.0, np.sin(np.clip(v, 0.0, 1.0) * math.pi)), 0.55)
     vy = 0.65 * vert_full + 0.35 * vert
     alpha = np.clip((horiz + divider_line) * vy, 0.0, 1.0)
-    out = np.ones((h, w, 4), np.float32)
+    out = np.zeros((h, w, 4), np.float32)
+    out[..., :3] = alpha[..., None]
     out[..., 3] = alpha
     return Image.fromarray((out * 255.0 + 0.5).astype(np.uint8), "RGBA")
 
@@ -312,7 +333,8 @@ def build_jd4_half_sunburst(w=288, h=352, n_rays=15):
     core_glow = np.exp(-((dist / 0.30) ** 2)) * 0.38
     clip_left = np.clip((xx - ox + 1.5 * S) / (2.0 * S), 0.0, 1.0)
     arr = np.clip(((np.asarray(im, np.float32) / 255.0) * ray_fall + core_glow) * clip_left, 0.0, 1.0)
-    out = np.ones((H, W, 4), np.float32)
+    out = np.zeros((H, W, 4), np.float32)
+    out[..., :3] = arr[..., None]
     out[..., 3] = arr
     return Image.fromarray((out * 255.0 + 0.5).astype(np.uint8), "RGBA").resize((w, h), Image.Resampling.LANCZOS)
 
@@ -322,12 +344,12 @@ def load_real_fx_bank():
     barcode    = load_png_tex(r"textures\ui_com_barcode.png")
     x_flare    = lum_to_white_alpha(load_png_tex(r"textures\x_flare.png").crop((256, 256, 768, 768)).resize((192, 192), Image.Resampling.LANCZOS), gamma=0.9, gain=1.15)
     planet_rays= lum_to_white_alpha(load_png_tex(r"textures\x_planeterays.png").resize((192, 192), Image.Resampling.LANCZOS), gamma=0.85, gain=1.6)
-    speed_rays = load_png_tex(r"textures\sfx_goldemove_speed.png").resize((224, 224), Image.Resampling.LANCZOS)
+    speed_rays = bake_mask_rgb(load_png_tex(r"textures\sfx_goldemove_speed.png").resize((224, 224), Image.Resampling.LANCZOS))
 
     bubbles    = lum_to_white_alpha(load_ckd_tex(r"fx\fx\ui_com_fx_lens_bubbles.tga.ckd"), gamma=0.95, gain=1.08)
     msparks    = lum_to_white_alpha(load_ckd_tex(r"fx\fx\ui_fx_multi_sparks.tga.ckd"), gamma=0.92, gain=1.15)
     circles    = lum_to_white_alpha(load_ckd_tex(r"fx\fx\ui_com_fx_circles.tga.ckd"), gamma=0.85, gain=1.55)
-    saber      = load_ckd_tex(r"fx\fx\ui_fx_light_saber.tga.ckd")
+    saber      = bake_mask_rgb(load_ckd_tex(r"fx\fx\ui_fx_light_saber.tga.ckd"))
     dglow      = lum_to_white_alpha(load_ckd_tex(r"fx\fx\ui_com_fx_simpleglow.tga.ckd"), gamma=1.0, gain=1.0)
     pglow      = lum_to_white_alpha(load_ckd_tex(r"fx\fx\ui_com_fx_pointglow.tga.ckd"), gamma=0.9, gain=1.15)
     sparks32   = lum_to_white_alpha(load_ckd_tex(r"fx\fx\ui_com_fx_sparks_32.tga.ckd"), gamma=1.1, gain=1.0)
@@ -813,7 +835,7 @@ def build_jd4_anims():
     X_DIV = -212.0
     A.layer("dglow", 0.0, d * 0.88, "normal", x=X_DIV + 110.0, y=10.0, size=(360, 320),
             a=[(0.0, 0.0), (0.06, 0.42), (d * 0.88, 0.0)], col="#8CE814")
-    add_jd4_curtain(A, d, X_DIV, 490, 390, "#6FD408", "#CAFF54", alpha_peak=0.80)
+    add_jd4_curtain(A, d, X_DIV, 490, 390, "#6FD408", "#CAFF54", alpha_peak=0.68)
     A.layer("jd4_half_sun", 0.0, d, "normal", x=X_DIV + 195.0, y=14.0, size=(410, 430),
             sx=[(0.0, 0.35, "outBack"), (0.12, 1.0), (d, 1.12)],
             sy=[(0.0, 0.45, "outBack"), (0.12, 1.0), (d, 1.08)],
@@ -839,7 +861,7 @@ def build_jd4_anims():
     d = 0.84
     A = Anim(d)
     X_DIV = -172.0
-    add_jd4_curtain(A, d, X_DIV, 440, 375, "#4CCCF8", "#C0F6FF", alpha_peak=0.78)
+    add_jd4_curtain(A, d, X_DIV, 440, 375, "#4CCCF8", "#C0F6FF", alpha_peak=0.66)
     A.layer("jd4_half_sun", 0.0, d * 0.9, "normal", x=X_DIV + 165.0, y=12.0, size=(345, 360),
             sx=[(0.0, 0.3, "outCubic"), (0.14, 0.95), (d * 0.9, 1.08)],
             a=[(0.0, 0.0), (0.07, 0.48), (0.40, 0.38), (d * 0.9, 0.0)], col="#CEFAFF")
@@ -873,7 +895,7 @@ def build_jd4_anims():
     d = 0.82
     A = Anim(d)
     X_DIV = -162.0
-    add_jd4_curtain(A, d, X_DIV, 415, 365, "#127CE6", "#74D8FF", alpha_peak=0.86)
+    add_jd4_curtain(A, d, X_DIV, 415, 365, "#127CE6", "#74D8FF", alpha_peak=0.72)
     A.layer("bubble_soft", 0.0, 0.66, "normal", x=X_DIV + 92.0, y=38.0, size=(240, 220),
             sc=[(0.0, 0.6, "outCubic"), (0.66, 1.15)], a=[(0.0, 0.0), (0.06, 0.72), (0.66, 0.0)], col="#98ECFF")
     jd4_bubbles = [
@@ -901,7 +923,7 @@ def build_jd4_anims():
     X_DIV = -112.0
     A.layer("dglow", 0.0, d * 0.85, "normal", x=X_DIV + 95.0, y=8.0, size=(280, 260),
             a=[(0.0, 0.0), (0.05, 0.52), (d * 0.85, 0.0)], col="#D848FF")
-    add_jd4_curtain(A, d, X_DIV, 330, 350, "#9A12F0", "#EE88FF", alpha_peak=0.88)
+    add_jd4_curtain(A, d, X_DIV, 330, 350, "#9A12F0", "#EE88FF", alpha_peak=0.70)
     add_jd4_text(A, "OK", d, (162, 108), "#F094FF", slam=1.30)
     anims["Ok"] = A
 
@@ -909,7 +931,7 @@ def build_jd4_anims():
     d = 0.88
     A = Anim(d)
     X_DIV = -172.0
-    add_jd4_curtain(A, d, X_DIV, 450, 380, "#F09C00", "#FFEC8C", alpha_peak=0.85)
+    add_jd4_curtain(A, d, X_DIV, 450, 380, "#F09C00", "#FFEC8C", alpha_peak=0.66)
     A.layer("sunburst_12", 0.0, d, "normal", x=0.0, y=8.0, size=(610, 610),
             sc=[(0.0, 0.55, "outBack"), (0.14, 1.0), (d, 1.20)],
             rot=[(0.0, 0.0), (d, 24.0)],

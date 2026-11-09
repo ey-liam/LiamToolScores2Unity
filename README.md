@@ -1,9 +1,20 @@
-# LiamToolScores2Unity V4.2
+# LiamToolScores2Unity V4.3
 
 Herramienta web profesional para crear, personalizar, previsualizar y exportar efectos de puntuación (**ScoringFX**) de Just Dance directamente a **Just Dance Next (Spine 4.0.64 binario en UI Toolkit)** y proyectos Unity. Incluye integración en tiempo real con servidor **MCP (Model Context Protocol)** para automatización e inspección con Inteligencia Artificial.
 
 - **GitHub Pages**: https://ey-liam.github.io/LiamToolScores2Unity/
 - **Repositorio**: https://github.com/ey-liam/LiamToolScores2Unity
+
+---
+
+## Novedades en V4.3 (Máscara horneada en RGB: transparencia real en JDNext)
+
+- **Corregida la transparencia de todos los ScoringFX personalizados (`JD2014_2016`, `JD 4` y `Custom_Scratch`)**:
+  - `JDSpineMesh` obtiene la opacidad del **color** de la textura (alfa premultiplicado), no del canal alfa. Las texturas de efecto se generaban con `RGB = 1.0` en las zonas transparentes, así que el juego dibujaba **rectángulos sólidos con bordes duros** (columna verde de `PERFECT`, panel azul de `GOOD`/`SUPER`, bloque morado de `OK`, bloque dorado de `YEAH`).
+  - Nueva función `bake_mask_rgb()` y `lum_to_white_alpha()` corregida: **`RGB = máscara` y `Alpha = máscara`** en `dglow`, `starfield`, `sparks_*`, `bubbles`, `circle_*`, `x_flare`, `planet_rays`, `light_saber`, `speed_rays`, `sunburst_12`, `jd4_half_sun`, `col_coach`, `col_barcode` y `jd4_curtain`.
+  - Columna JD2014 y cortina JD4 con caída lateral/superior suave (`smoothstep`) y picos de alfa ajustados (`0.66–0.72`) para que se lean como haces de luz y no como paneles.
+  - La corrección es válida para cualquier mezcla del motor (`normal`, `premultiplied`, luminancia) porque color y cobertura coinciden.
+- **`tools/preview_lfx.py --all-docs`** regenera las tiras y hojas de contacto con el aspecto corregido; `tools/preflight_scoringfx.py` sigue en **PASA COMPROBACION PREVIA OK** para ambos packs.
 
 ---
 
